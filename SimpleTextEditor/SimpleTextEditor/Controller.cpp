@@ -2,53 +2,100 @@
 
 void Controller::start()
 {
-    if (m_mymodel->curr_status == WindowModel::NAVIGATION)
+    int global_num = 1;
+    while (global_num)
     {
-        noecho();
-        keypad(stdscr, true);
-        //cbreak();
-        getyx(stdscr, m_y, m_x);
-        float temp;
-        do {
-            m_choice = getch(stdscr);
-            switch (m_choice)
-            {
-            case KEY_UP:
-            {
-                presssed_up();
-                break;
-            }
-            case KEY_DOWN:
-            {
-                pressed_down();
-                break;
-            }
-            case KEY_LEFT:
-            {
-                pressed_left();
-                break;
-            }
-            case KEY_RIGHT:
-            {
-                pressed_right();
-                break;
-            }
-            case '0':
-            {
-                pressed_beg_line();
-                break;
-            }
-            case '$':
-            {
-                pressed_end_line();
-                break;
-            }
-            default:
-                break;
-            }
-        } while (m_choice != 'Q');
-        keypad(stdscr, false);
-        echo();
+        if (m_mymodel->curr_status == WindowModel::WAITING)
+        {
+            noecho();
+            keypad(stdscr, true);
+            do {
+                m_choice = getch(stdscr);
+                switch (m_choice)
+                {
+                case ':':
+                {
+                    m_mymodel->set_status(WindowModel::COMMAND);
+                    break;
+                }
+                default:
+                    break;
+                }
+            } while (m_choice != ':');
+            keypad(stdscr, false);
+            echo();
+        }
+        if (m_mymodel->curr_status == WindowModel::COMMAND)
+        {
+            move(m_mymodel->MAX_NLINES - 1, 0);
+            attron(COLOR_PAIR(1));
+            addch(':');
+            refresh();
+            getyx(stdscr, m_y, m_x);
+            echo();
+            keypad(stdscr, true);
+            do {
+                m_choice = getch(stdscr);
+                switch (m_choice)
+                {
+                case 'o':
+                {
+                    m_choice = getch(stdscr); // ' '
+                    m_mymodel->get_filename();
+                }
+                default:
+                    break;
+                }
+            } while (m_choice != 27);
+            attroff(COLOR_PAIR(1));
+        }
+        if (m_mymodel->curr_status == WindowModel::NAVIGATION)
+        {
+            noecho();
+            keypad(stdscr, true);
+            //cbreak();
+            getyx(stdscr, m_y, m_x);
+            do {
+                m_choice = getch(stdscr);
+                switch (m_choice)
+                {
+                case KEY_UP:
+                {
+                    presssed_up();
+                    break;
+                }
+                case KEY_DOWN:
+                {
+                    pressed_down();
+                    break;
+                }
+                case KEY_LEFT:
+                {
+                    pressed_left();
+                    break;
+                }
+                case KEY_RIGHT:
+                {
+                    pressed_right();
+                    break;
+                }
+                case '0':
+                {
+                    pressed_beg_line();
+                    break;
+                }
+                case '$':
+                {
+                    pressed_end_line();
+                    break;
+                }
+                default:
+                    break;
+                }
+            } while (m_choice != 'Q');
+            keypad(stdscr, false);
+            echo();
+        }
     }
 }
 void Controller::presssed_up()
