@@ -37,17 +37,39 @@ void WindowModel::SetFilename(const char* new_filename)
 	NotifyUpdateFilename();
 }
 
-/*
-void WindowModel::create_line_stat()
+int WindowModel::GetKeyFromCmd(int key)
 {
-	int x = 0, y = 0;
-	mvprintw(MAX_NLINES - 2, 0, mode[curr_status].c_str());
-	refresh();
-	getyx(stdscr, y, x);
-	mvprintw(y, x + 1, m_filename.c_str());
-	refresh();
-	getyx(stdscr, y, x);
-	mvprintw(y, x + 1, "Line: %d/%d", m_num_curr_line, m_num_lines);
-	refresh();
+	switch (key)
+	{
+	case 8:
+	{
+		str.erase(str.length() - 1);
+		NotifyUpdateCmd();
+		break;
+	}
+	case 13:
+	{
+		NotifyClearCmd();
+		//парс команды
+		str.clear();
+		//buffer = {0};
+		idx = 0;
+		break;
+	}
+	case 27: //ESC
+	{
+		str.clear();
+		NotifyEndCmd();
+		SetStatus(NAVIGATION);
+		return 0;
+	}
+	default:
+		str.push_back(key);
+		//str[idx] = key;
+		//buffer[idx] = key;
+		//idx++;
+		NotifyUpdateCmd();
+		break;
+	}
+	return 1;
 }
-*/

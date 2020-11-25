@@ -4,15 +4,17 @@ void Controller::start()
 {
     m_mymodel->SetStartConfig();
 
+    raw();
+    keypad(stdscr, true);
     int global_num = 1;
     while (global_num)
     {
         if (m_mymodel->curr_status == WindowModel::WAITING)
         {
+            keypad(m_view->text_win, true);
             noecho();
-            keypad(stdscr, true);
             do {
-                m_choice = getch(stdscr);
+                m_choice = wgetch(m_view->text_win);
                 switch (m_choice)
                 {
                 case ':':
@@ -24,43 +26,32 @@ void Controller::start()
                     break;
                 }
             } while (m_choice != ':');
-            keypad(stdscr, false);
-            echo();
         }
         if (m_mymodel->curr_status == WindowModel::COMMAND)
         {
             noecho();
-            keypad(stdscr, true);
-            move(m_mymodel->MAX_NCOLS - 1, 1);
-            char command_buffer[560] = { 0 };
-            int i = 0;
+            keypad(m_view->cmd_win, true);
+            wmove(m_view->cmd_win, 0, 1);
+            wrefresh(m_view->cmd_win);
+            int stop = 1;
             do {
-                m_choice = getch(stdscr);
-                switch (m_choice)
-                {
-                case 'o':
-                {
-                    m_choice = getch(stdscr); // ' '
-                    get_filename();
-                }
-                default:
-                    break;
-                }
-            } while (m_choice != 27);
+                m_choice = wgetch(m_view->cmd_win);
+                stop = m_mymodel->GetKeyFromCmd(m_choice);  
+            } while (stop);
         }
         if (m_mymodel->curr_status == WindowModel::NAVIGATION)
         {
-            echo();
-            keypad(stdscr, true);
-            //cbreak();
-            getyx(stdscr, m_y, m_x);
+            noecho();
+            keypad(m_view->text_win, true);
+            wmove(m_view->text_win, 0, 0);
             do {
-                m_choice = getch(stdscr);
+                m_choice = wgetch(m_view->text_win);
                 switch (m_choice)
                 {
                 case KEY_UP:
                 {
-                    presssed_up();
+                    //presssed_up();
+                    global_num = 0;
                     break;
                 }
                 case KEY_DOWN:

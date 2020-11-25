@@ -19,3 +19,17 @@ void Observable::NotifyUpdateFilename()
 {
     m_view_observer->UpdateFilename();
 }
+
+void Observable::NotifyUpdateCmd()
+{
+    m_view_observer->UpdateCmd();
+}
+
+void Observable::NotifyClearCmd()
+{
+    m_view_observer->ClearCmd();
+}
+void Observable::NotifyEndCmd()
+{
+    m_view_observer->EndCmd();
+}

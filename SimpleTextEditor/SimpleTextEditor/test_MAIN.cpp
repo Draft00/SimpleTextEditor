@@ -90,7 +90,7 @@ int main()
 	
     WindowModel Model;
     ConsoleView View(&Model);
-    Controller Controller(&Model);
+    Controller Controller(&Model, &View);
     Controller.start();
     getch();
     return 0;

@@ -12,6 +12,8 @@ public:
     virtual void UpdateCmd() = 0;
     virtual void USetStartConfig() = 0;
     virtual void UpdateFilename() = 0;
+    virtual void ClearCmd() = 0;
+    virtual void EndCmd() = 0;
 };
 
 class Observable
@@ -21,6 +23,10 @@ public:
     void NotifySetStartConfig();
     void NotifyUpdateMode();
     void NotifyUpdateFilename();
+    void NotifyDeleteSymbol();
+    void NotifyUpdateCmd();
+    void NotifyClearCmd();
+    void NotifyEndCmd();
 
     void notifyUpdate_cmd_line()
     {
@@ -53,19 +59,23 @@ public:
     std::string filename = "none";
     int num_curr_line = 0;
     int num_lines = 0;
+    std::string str;
+    char buffer[560] = {0};
+    int idx = 0;
 
     void SetStatus(status new_status);
     void SetFilename(const char* new_filename);
-    void get_filename();
-    void create_line_stat();
+    int GetKeyFromCmd(int key);
 
     void SetStartConfig();
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;
+
 private:
     float _temperatureF;
     WINDOW* m_local_win = NULL;
+
 
 };
 
@@ -77,9 +87,11 @@ public:
 
 
     void UpdateMode() override;
-    virtual void UpdateCmd() {}
+    void UpdateCmd() override;
     void USetStartConfig() override;
     void UpdateFilename() override;
+    void ClearCmd() override;
+    void EndCmd() override;
 
     /*virtual void update()
     {
@@ -88,13 +100,14 @@ public:
         printf("Temperature in Farenheit: %.2f\n", _model->getF());
         printf("Input temperature in Celsius: ");
     }*/
+    WINDOW* cmd_win = nullptr;
+    WINDOW* text_win = nullptr;
+    WINDOW* mode_win = nullptr;
+    WINDOW* filename_win = nullptr;
+    WINDOW* line_stats_win = nullptr;
+
 private:
     WindowModel* m_mymodel;
-    WINDOW* m_text_win = nullptr;
-    WINDOW* m_cmd_win = nullptr; 
-    WINDOW* m_mode_win = nullptr;
-    WINDOW* m_filename_win = nullptr;
-    WINDOW* m_line_stats_win = nullptr; 
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;
@@ -117,14 +130,16 @@ private:
 class Controller
 {
 public:
-    Controller(WindowModel* model)
+    Controller(WindowModel* model, ConsoleView* view)
     {
         m_mymodel = model;
+        m_view = view;
     }
     void start();
 
 private:
     WindowModel* m_mymodel;
+    ConsoleView* m_view; 
 
     int m_x = 0;
     int m_y = 0;

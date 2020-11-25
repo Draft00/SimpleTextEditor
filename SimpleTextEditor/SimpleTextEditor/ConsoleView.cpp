@@ -10,52 +10,76 @@ ConsoleView::ConsoleView(WindowModel* model)
 
     init_coloros_pair();
 
-    m_text_win = create_text_win();
-    m_cmd_win = create_cmd_win();
+    text_win = create_text_win();
+    cmd_win = create_cmd_win();
     create_status_wins();
 
 }
 
 ConsoleView::~ConsoleView()
 {
-    delwin(m_text_win);
-    delwin(m_cmd_win);
-    delwin(m_mode_win);
-    delwin(m_filename_win);
-    delwin(m_line_stats_win);
+    delwin(text_win);
+    delwin(cmd_win);
+    delwin(mode_win);
+    delwin(filename_win);
+    delwin(line_stats_win);
     endwin();
 }
 
 void ConsoleView::USetStartConfig()
 {
-    wprintw(m_mode_win, mode_str[m_mymodel->curr_status].c_str());
-    wrefresh(m_mode_win);
-    wprintw(m_filename_win, m_mymodel->filename.c_str());
-    wrefresh(m_filename_win);
-    wprintw(m_line_stats_win, "Line: %d/%d", m_mymodel->num_curr_line, m_mymodel->num_lines);
-    wrefresh(m_line_stats_win);
+    wprintw(mode_win, mode_str[m_mymodel->curr_status].c_str());
+    wrefresh(mode_win);
+    wprintw(filename_win, m_mymodel->filename.c_str());
+    wrefresh(filename_win);
+    wprintw(line_stats_win, "Line: %d/%d", m_mymodel->num_curr_line, m_mymodel->num_lines);
+    wrefresh(line_stats_win);
     char hello_message[] = "Use :h for help\nUse :o filename to open file";
-    wprintw(m_text_win, hello_message);
-    wrefresh(m_text_win);
+    wprintw(text_win, hello_message);
+    wrefresh(text_win);
+}
+
+void ConsoleView::ClearCmd()
+{
+    werase(cmd_win);
+    waddch(cmd_win, ':');
+    wrefresh(cmd_win);
+}
+
+void ConsoleView::EndCmd()
+{
+    werase(cmd_win);
+    wrefresh(cmd_win);
 }
 
 void ConsoleView::UpdateMode()
 {
-    werase(m_mode_win);
-    wprintw(m_mode_win, mode_str[m_mymodel->curr_status].c_str());
-    wrefresh(m_mode_win);
+    werase(mode_win);
+    wprintw(mode_win, mode_str[m_mymodel->curr_status].c_str());
+    wrefresh(mode_win);
     if (m_mymodel->curr_status == WindowModel::COMMAND)
     {
-        wprintw(m_cmd_win, ":");
-        wrefresh(m_cmd_win);
+        wprintw(cmd_win, ":");
+        wrefresh(cmd_win);
     }
 }
 
 void ConsoleView::UpdateFilename()
 {
-    werase(m_filename_win);
-    wprintw(m_filename_win, m_mymodel->filename.c_str());
-    wrefresh(m_mode_win);
+    werase(filename_win);
+    wprintw(filename_win, m_mymodel->filename.c_str());
+    wrefresh(mode_win);
+}
+
+void ConsoleView::UpdateCmd()
+{
+    int y, x;
+    werase(cmd_win);
+    waddch(cmd_win, ':');
+    //wprintw(cmd_win, m_mymodel->buffer);
+    wprintw(cmd_win, m_mymodel->str.c_str());
+    //wmove(m_cmd_win, y, x + 1);
+    wrefresh(cmd_win);
 }
 
 /*
@@ -90,15 +114,15 @@ void ConsoleView::init_coloros_pair()
 
 void ConsoleView::create_status_wins()
 {
-    m_mode_win = newwin(1, 4, MAX_NLINES - 2, 0);
-    wbkgd(m_mode_win, COLOR_PAIR(3));
-    wrefresh(m_mode_win);
-    m_filename_win = newwin(1, 30, MAX_NLINES - 2, 4);
-    wbkgd(m_filename_win, COLOR_PAIR(2));
-    wrefresh(m_filename_win);
-    m_line_stats_win = newwin(1, MAX_NCOLS - 34, MAX_NLINES - 2, 34);
-    wbkgd(m_line_stats_win, COLOR_PAIR(3));
-    wrefresh(m_line_stats_win);
+    mode_win = newwin(1, 4, MAX_NLINES - 2, 0);
+    wbkgd(mode_win, COLOR_PAIR(3));
+    wrefresh(mode_win);
+    filename_win = newwin(1, 30, MAX_NLINES - 2, 4);
+    wbkgd(filename_win, COLOR_PAIR(2));
+    wrefresh(filename_win);
+    line_stats_win = newwin(1, MAX_NCOLS - 34, MAX_NLINES - 2, 34);
+    wbkgd(line_stats_win, COLOR_PAIR(3));
+    wrefresh(line_stats_win);
 }
 
 /*
