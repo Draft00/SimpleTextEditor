@@ -89,9 +89,10 @@ int main()
 	endwin();*/
 	
     WindowModel Model;
-    ConsoleView view(&Model);
+    ConsoleView View(&Model);
     Controller Controller(&Model);
     Controller.start();
+    getch();
     return 0;
 }
 

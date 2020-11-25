@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="ConsoleView.cpp" />
     <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="Observable.cpp" />
     <ClCompile Include="test_MAIN.cpp" />
     <ClCompile Include="WindowModel.cpp" />
   </ItemGroup>

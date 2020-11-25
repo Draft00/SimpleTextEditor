@@ -2,6 +2,8 @@
 
 void Controller::start()
 {
+    m_mymodel->SetStartConfig();
+
     int global_num = 1;
     while (global_num)
     {
@@ -15,7 +17,7 @@ void Controller::start()
                 {
                 case ':':
                 {
-                    m_mymodel->set_status(WindowModel::COMMAND);
+                    m_mymodel->SetStatus(WindowModel::COMMAND);
                     break;
                 }
                 default:
@@ -27,13 +29,11 @@ void Controller::start()
         }
         if (m_mymodel->curr_status == WindowModel::COMMAND)
         {
-            move(m_mymodel->MAX_NLINES - 1, 0);
-            attron(COLOR_PAIR(1));
-            addch(':');
-            refresh();
-            getyx(stdscr, m_y, m_x);
-            echo();
+            noecho();
             keypad(stdscr, true);
+            move(m_mymodel->MAX_NCOLS - 1, 1);
+            char command_buffer[560] = { 0 };
+            int i = 0;
             do {
                 m_choice = getch(stdscr);
                 switch (m_choice)
@@ -41,17 +41,16 @@ void Controller::start()
                 case 'o':
                 {
                     m_choice = getch(stdscr); // ' '
-                    m_mymodel->get_filename();
+                    get_filename();
                 }
                 default:
                     break;
                 }
             } while (m_choice != 27);
-            attroff(COLOR_PAIR(1));
         }
         if (m_mymodel->curr_status == WindowModel::NAVIGATION)
         {
-            noecho();
+            echo();
             keypad(stdscr, true);
             //cbreak();
             getyx(stdscr, m_y, m_x);
@@ -98,6 +97,41 @@ void Controller::start()
         }
     }
 }
+
+void Controller::get_filename()
+{
+    char filename_s[560] = { 0 };
+    int i = 0;
+    int c = 0;
+    nonl();
+    int stop = 1;
+    while (stop)
+    {
+        c = getch();
+        switch (c)
+        {
+        case PADENTER:
+        {
+            filename_s[i] = '\0';
+            stop = 0;
+            break;
+        }
+        case 8:
+        {
+            //удалить символ (и закрашивать при этом).
+            //i--;
+        }
+        default:
+        {
+            filename_s[i] = c;
+            i++;
+            break;
+        }
+        }
+    }
+    m_mymodel->SetFilename(filename_s);
+}
+
 void Controller::presssed_up()
 {
 	if (m_y > 0)
