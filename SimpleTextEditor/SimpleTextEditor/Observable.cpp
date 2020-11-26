@@ -37,3 +37,23 @@ void Observable::NotifyPrintNewText()
 {
     m_view_observer->PrintNewText();
 }
+void Observable::NotifyPressedDollar()
+{
+    m_view_observer->PressedDollar();
+}
+void Observable::NotifyPressedZero()
+{
+    m_view_observer->PressedZero();
+}
+void Observable::NotifyPressedKeyDown()
+{
+    m_view_observer->PressedKeyDown();
+}
+void Observable::NotifyPressedB()
+{
+    m_view_observer->PressedB();
+}
+void Observable::NotifyPressedW()
+{
+    m_view_observer->PressedW();
+}

@@ -7,6 +7,11 @@ void Controller::start()
     raw();
     keypad(stdscr, true);
     int global_num = 1;
+
+    m_mymodel->OpenFile("test file.txt");
+    m_mymodel->NotifyPrintNewText();
+    m_mymodel->curr_status = WindowModel::NAVIGATION;
+
     while (global_num)
     {
         if (m_mymodel->curr_status == WindowModel::WAITING)
@@ -46,6 +51,7 @@ void Controller::start()
         {
             noecho();
             keypad(m_view->text_win, true);
+            scrollok(m_view->text_win, true);
             wmove(m_view->text_win, 0, 0);
             wrefresh(m_view->text_win);
             int stop = 1;
@@ -53,91 +59,7 @@ void Controller::start()
                 m_choice = wgetch(m_view->text_win);
                 stop = m_mymodel->GetKeyFromNavigation(m_choice);
             } while (stop);
+            scrollok(m_view->text_win, false);
         }
     }
-}
-
-void Controller::get_filename()
-{
-    char filename_s[560] = { 0 };
-    int i = 0;
-    int c = 0;
-    nonl();
-    int stop = 1;
-    while (stop)
-    {
-        c = getch();
-        switch (c)
-        {
-        case PADENTER:
-        {
-            filename_s[i] = '\0';
-            stop = 0;
-            break;
-        }
-        case 8:
-        {
-            //удалить символ (и закрашивать при этом).
-            //i--;
-        }
-        default:
-        {
-            filename_s[i] = c;
-            i++;
-            break;
-        }
-        }
-    }
-    m_mymodel->SetFilename(filename_s);
-}
-
-void Controller::presssed_up()
-{
-	if (m_y > 0)
-	{
-		m_y--;
-		move(m_y, m_x);
-		refresh();
-	}
-}
-void Controller::pressed_down() //TODO SKROLLING
-{
-    if (m_y < (m_mymodel->MAX_NLINES - 3))
-    {
-        m_y++;
-        move(m_y, m_x);
-        refresh();
-    }
-}
-void Controller::pressed_right()
-{
-    if (m_x < m_mymodel->MAX_NCOLS)
-    {
-        m_x++;
-        move(m_y, m_x);
-        refresh();
-    }
-}
-
-void Controller::pressed_left()
-{
-    if (m_x > 0)
-    {
-        m_x--;
-        move(m_y, m_x);
-        refresh();
-    }
-}
-void Controller::pressed_beg_line()
-{
-    m_x = 0;
-    move(m_y, m_x);
-    refresh();
-}
-
-void Controller::pressed_end_line()
-{
-    m_x = (m_mymodel->MAX_NCOLS - 1);
-    move(m_y, m_x);
-    refresh();
 }

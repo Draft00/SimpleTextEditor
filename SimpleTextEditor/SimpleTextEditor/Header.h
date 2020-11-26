@@ -19,7 +19,12 @@ public:
     virtual void ClearCmd() = 0;
     virtual void EndCmd() = 0;
     virtual void PrintNewText() = 0;
-    virtual void CountLines() = 0;
+
+    virtual void PressedDollar() = 0;
+    virtual void PressedZero() = 0;
+    virtual void PressedB() = 0;
+    virtual void PressedW() = 0;
+    virtual void PressedKeyDown() = 0;
 };
 
 class Observable
@@ -34,6 +39,12 @@ public:
     void NotifyClearCmd();
     void NotifyEndCmd();
     void NotifyPrintNewText();
+
+    void NotifyPressedDollar();
+    void NotifyPressedZero();
+    void NotifyPressedB();
+    void NotifyPressedW();
+    void NotifyPressedKeyDown();
 
     void notifyUpdate_cmd_line()
     {
@@ -67,16 +78,23 @@ public:
     {
         STOP = 2
     };
+
     status curr_status = WAITING;
     STD::MyString filename = "none";
     size_t num_curr_line = 0;
     size_t num_lines = 0;
 
+    int MAX_NLINES = 30;
+    int MAX_NCOLS = 100;
+
     STD::MyString str;
     STD::MyString file_data;
-    //std::string str;
-    char buffer[560] = {0};
-    int idx = 0;
+
+    size_t idx_first_line = 0;
+    size_t idx_last_line = 0;
+    size_t idx = 0;
+
+    bool flag_changes = false;
 
     void SetStatus(status new_status);
     void SetFilename(const char* new_filename);
@@ -84,15 +102,13 @@ public:
 
     int GetKeyFromCmd(int key);
     int GetKeyFromNavigation(int key);
-
     int ParseCommand();
+
     void OpenFile(STD::MyString s_filename);
-    void SaveInFileAndExit();
-
-    int MAX_NLINES = 30;
-    int MAX_NCOLS = 100;
-
-    bool flag_changes = 0;
+    void SaveFile();
+    void SaveFile(STD::MyString s_filename);
+    void CountLines();
+    void CountIdxLastLine(); 
 
 private:
     float _temperatureF;
@@ -115,8 +131,12 @@ public:
     void ClearCmd() override;
     void EndCmd() override;
     void PrintNewText() override;
-    void CountLines() override;
     void UpdateLineStats() override;
+    void PressedDollar() override;
+    void PressedZero() override;
+    void PressedW() override;
+    void PressedB() override;
+    void PressedKeyDown() override; 
 
 
     WINDOW* cmd_win = nullptr;
@@ -136,6 +156,11 @@ private:
 
     int y_start_cmd = 0;
     int x_start_cmd = 0;
+    int y = 0;
+    int x = 0;
+    int y_nav = 0;
+    int x_nav = 0;
+    bool stop_nav_flag = false;
 
     std::string mode_str[5] = { "NRM", "CMD", "NAV", "SRC", "..." };
 
@@ -144,33 +169,23 @@ private:
 
     void create_status_wins();
     void init_coloros_pair();
+
 };
 
 class Controller
 {
 public:
-    Controller(WindowModel* model, ConsoleView* view)
-    {
+    Controller(WindowModel* model, ConsoleView* view) {
         m_mymodel = model;
         m_view = view;
     }
+    ~Controller() {};
     void start();
 
 private:
     WindowModel* m_mymodel;
     ConsoleView* m_view; 
 
-    int m_x = 0;
-    int m_y = 0;
     int m_choice = 0;
-
-    void presssed_up();
-    void pressed_down(); //TODO SKROLLING
-    void pressed_right();
-    void pressed_left();
-    void pressed_beg_line();
-    void pressed_end_line();
-
-    void get_filename();
 };
 #endif // !SIMPLE_TEXT_EDITOR

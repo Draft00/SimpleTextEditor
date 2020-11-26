@@ -26,6 +26,94 @@ ConsoleView::~ConsoleView()
     endwin();
 }
 
+void ConsoleView::PressedDollar()
+{
+    getyx(text_win, y, x);
+    if (m_mymodel->file_data[m_mymodel->idx] == '\n')
+        return;
+    while (m_mymodel->file_data[m_mymodel->idx] != '\n')
+    {
+        m_mymodel->idx++;
+        ++x;
+    }
+    m_mymodel->idx -= 1;
+    wmove(text_win, y, x - 1);
+    wrefresh(text_win);
+}
+void ConsoleView::PressedZero()
+{
+    getyx(text_win, y, x);
+    if (x == 0)
+        return;
+    while (x > 0)
+    {
+        m_mymodel->idx--;
+        --x;
+    }
+    wmove(text_win, y, 0);
+    wrefresh(text_win);
+}
+void ConsoleView::PressedKeyDown()
+{
+    if (m_mymodel->file_data[m_mymodel->idx + 1] != '\0') {
+        int curr_pos = 0;
+        getyx(text_win, y, x);
+
+        if (x > x_nav) {
+            x_nav = x;
+        }
+        if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
+            m_mymodel->idx++;
+        }
+        else m_mymodel->idx = m_mymodel->file_data.find("\n", m_mymodel->idx) + 1;
+
+        while (curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->file_data[m_mymodel->idx] != '\0')
+        {
+            //(x_nav + 1) чтобы --curr_pos всегда давало верный шаг
+            ++curr_pos; m_mymodel->idx++;
+        }
+        m_mymodel->idx--;  --curr_pos;
+        if (curr_pos == -1) {
+            m_mymodel->idx++;
+            curr_pos++;
+        }
+
+        char c = m_mymodel->file_data[m_mymodel->idx];
+        if (y + 1 > TEXT_W_LINES - 1)
+        {
+            wscrl(text_win, 1);
+            wrefresh(text_win);
+            char c = m_mymodel->file_data[m_mymodel->idx];
+            size_t idx_print = m_mymodel->idx - curr_pos;
+            size_t pos = m_mymodel->file_data.find("\n", idx_print);
+            if (pos == STD::MyString::npos) {
+                beep();
+                return;
+            }
+            STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
+            mvwprintw(text_win, y, 0, str_print.c_str());
+            m_mymodel->num_curr_line++;
+            UpdateLineStats();
+            wmove(text_win, y, curr_pos);
+        }
+        else {
+            m_mymodel->num_curr_line++;
+            UpdateLineStats();
+            wmove(text_win, y + 1, curr_pos);
+        }
+        wrefresh(text_win);
+    }
+    else {
+        beep();
+    }
+}
+void ConsoleView::PressedW()
+{
+}
+void ConsoleView::PressedB()
+{
+
+}
 void ConsoleView::USetStartConfig()
 {
     wprintw(mode_win, mode_str[m_mymodel->curr_status].c_str());
@@ -77,7 +165,7 @@ void ConsoleView::PrintNewText()
     wprintw(text_win, (m_mymodel->file_data.c_str() + m_mymodel->idx));
     wrefresh(text_win);
 
-    CountLines();
+    m_mymodel->CountLines();
     UpdateLineStats();
 
     /*if (m_mymodel->curr_status == WindowModel::COMMAND)
@@ -102,17 +190,6 @@ void ConsoleView::UpdateCmd()
     wrefresh(cmd_win);
 }
 
-void ConsoleView::CountLines()
-{
-    size_t pos = 0;
-    size_t idx = 0;
-    while (pos != -1)
-    {
-        pos = m_mymodel->file_data.find("\n", idx);
-        idx = pos + 1;
-        m_mymodel->num_lines++;
-    }
-}
 
 /*
     private methods
