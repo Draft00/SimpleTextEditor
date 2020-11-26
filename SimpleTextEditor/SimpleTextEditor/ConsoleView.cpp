@@ -68,18 +68,50 @@ void ConsoleView::UpdateFilename()
 {
     werase(filename_win);
     wprintw(filename_win, m_mymodel->filename.c_str());
-    wrefresh(mode_win);
+    wrefresh(filename_win);
+}
+
+void ConsoleView::PrintNewText()
+{
+    wclear(text_win);
+    wprintw(text_win, (m_mymodel->file_data.c_str() + m_mymodel->idx));
+    wrefresh(text_win);
+
+    CountLines();
+    UpdateLineStats();
+
+    /*if (m_mymodel->curr_status == WindowModel::COMMAND)
+    {
+        wmove(cmd_win, 0, 1);
+        wrefresh(cmd_win);
+    }*/
+}
+
+void ConsoleView::UpdateLineStats()
+{
+    wclear(line_stats_win);
+    wprintw(line_stats_win, "Line: %d/%d", m_mymodel->num_curr_line, m_mymodel->num_lines);
+    wrefresh(line_stats_win);
 }
 
 void ConsoleView::UpdateCmd()
 {
-    int y, x;
     werase(cmd_win);
     waddch(cmd_win, ':');
-    //wprintw(cmd_win, m_mymodel->buffer);
     wprintw(cmd_win, m_mymodel->str.c_str());
-    //wmove(m_cmd_win, y, x + 1);
     wrefresh(cmd_win);
+}
+
+void ConsoleView::CountLines()
+{
+    size_t pos = 0;
+    size_t idx = 0;
+    while (pos != -1)
+    {
+        pos = m_mymodel->file_data.find("\n", idx);
+        idx = pos + 1;
+        m_mymodel->num_lines++;
+    }
 }
 
 /*

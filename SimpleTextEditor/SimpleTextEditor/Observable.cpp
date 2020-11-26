@@ -33,3 +33,7 @@ void Observable::NotifyEndCmd()
 {
     m_view_observer->EndCmd();
 }
+void Observable::NotifyPrintNewText()
+{
+    m_view_observer->PrintNewText();
+}

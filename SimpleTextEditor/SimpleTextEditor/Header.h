@@ -3,18 +3,23 @@
 
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include "curses.h"
 #include "MyString.h"
+#include "panel.h"
 
 class Observer
 {
 public:
     virtual void UpdateMode() = 0;
     virtual void UpdateCmd() = 0;
+    virtual void UpdateLineStats() = 0;
     virtual void USetStartConfig() = 0;
     virtual void UpdateFilename() = 0;
     virtual void ClearCmd() = 0;
     virtual void EndCmd() = 0;
+    virtual void PrintNewText() = 0;
+    virtual void CountLines() = 0;
 };
 
 class Observable
@@ -28,6 +33,7 @@ public:
     void NotifyUpdateCmd();
     void NotifyClearCmd();
     void NotifyEndCmd();
+    void NotifyPrintNewText();
 
     void notifyUpdate_cmd_line()
     {
@@ -62,10 +68,12 @@ public:
         STOP = 2
     };
     status curr_status = WAITING;
-    std::string filename = "none";
-    int num_curr_line = 0;
-    int num_lines = 0;
+    STD::MyString filename = "none";
+    size_t num_curr_line = 0;
+    size_t num_lines = 0;
+
     STD::MyString str;
+    STD::MyString file_data;
     //std::string str;
     char buffer[560] = {0};
     int idx = 0;
@@ -78,9 +86,13 @@ public:
     int GetKeyFromNavigation(int key);
 
     int ParseCommand();
+    void OpenFile(STD::MyString s_filename);
+    void SaveInFileAndExit();
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;
+
+    bool flag_changes = 0;
 
 private:
     float _temperatureF;
@@ -102,14 +114,11 @@ public:
     void UpdateFilename() override;
     void ClearCmd() override;
     void EndCmd() override;
+    void PrintNewText() override;
+    void CountLines() override;
+    void UpdateLineStats() override;
 
-    /*virtual void update()
-    {
-        system("cls");
-        printf("Temperature in Celsius: %.2f\n", _model->getC());
-        printf("Temperature in Farenheit: %.2f\n", _model->getF());
-        printf("Input temperature in Celsius: ");
-    }*/
+
     WINDOW* cmd_win = nullptr;
     WINDOW* text_win = nullptr;
     WINDOW* mode_win = nullptr;

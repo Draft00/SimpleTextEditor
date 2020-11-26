@@ -47,48 +47,12 @@ void Controller::start()
             noecho();
             keypad(m_view->text_win, true);
             wmove(m_view->text_win, 0, 0);
+            wrefresh(m_view->text_win);
             int stop = 1;
             do {
                 m_choice = wgetch(m_view->text_win);
                 stop = m_mymodel->GetKeyFromNavigation(m_choice);
-                /*switch (m_choice)
-                {
-                case KEY_UP:
-                {
-                    //presssed_up();
-                    global_num = 0;
-                    break;
-                }
-                case KEY_DOWN:
-                {
-                    pressed_down();
-                    break;
-                }
-                case KEY_LEFT:
-                {
-                    pressed_left();
-                    break;
-                }
-                case KEY_RIGHT:
-                {
-                    pressed_right();
-                    break;
-                }
-                case '0':
-                {
-                    pressed_beg_line();
-                    break;
-                }
-                case '$':
-                {
-                    pressed_end_line();
-                    break;
-                }
-                default:
-                    break;
-                }
-                */
-            } while (m_choice != 'Q');
+            } while (stop);
         }
     }
 }

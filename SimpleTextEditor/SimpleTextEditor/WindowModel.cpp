@@ -56,9 +56,7 @@ int WindowModel::GetKeyFromCmd(int key)
 		int command = -1;
 		command = ParseCommand();
 		str.clear();
-		idx = 0;
-		if (command == STOP)
-		{
+		if (command == STOP) {
 			return -1;
 		}
 		break;
@@ -69,6 +67,7 @@ int WindowModel::GetKeyFromCmd(int key)
 		NotifyEndCmd();
 		SetStatus(NAVIGATION);
 		return 0;
+		break;
 	}
 	default:
 		str.append(1, key);
@@ -84,15 +83,37 @@ int WindowModel::ParseCommand()
 	{
 		if (str == "q!")
 		{
-			//TODO закрыть документ
 			return STOP;
 		}
-		if (str == "x")
-		{
+		else if (str == "q") {
+			if (flag_changes == 1)
+			{
+				beep();
+				return 1;
+			}
+			return STOP;
 
 		}
-		else if (str == "w")
-		{
+		else if (str == "x") {
+			SaveInFileAndExit();
+		}
+		else if (str == "w") {
+			
+		}
+		else if (str[0] == 'w') {
+			//TODO parse filename
+		}
+		else if (str[0] == 'o') {
+			STD::MyString filename;
+			filename = str.substr(2);
+			OpenFile(filename);
+			NotifyPrintNewText();
+			NotifyClearCmd(); //чтобы вернуться в cmd.
+		}
+		else if (str == "wq!") {
+
+		}
+		else if (str == "h") {
 
 		}
 		else
@@ -100,7 +121,38 @@ int WindowModel::ParseCommand()
 
 		}
 	}
+	return 1;
 }
+void WindowModel::SaveInFileAndExit()
+{
+	std::ofstream fout;
+	fout.open(filename.c_str(), std::ios_base::out);
+	if (!fout.is_open()) {
+		beep(); //TODO return message
+		return;
+	}
+	fout << file_data;
+	fout.close();
+}
+
+void WindowModel::OpenFile(STD::MyString s_filename)
+{
+	char c;
+	std::ifstream fin;
+	fin.open(s_filename.c_str(), std::ios_base::in);
+	if (!fin.is_open()) {
+		beep(); //TODO RETURN MESSAGE
+		return;
+	}
+	while (!fin.eof()) {
+		fin.get(c);
+		file_data.append(1, c);
+	}
+	fin.close();
+	filename = s_filename;
+	NotifyUpdateFilename();
+}
+
 int WindowModel::GetKeyFromNavigation(int key)
 {
 	return 0;
