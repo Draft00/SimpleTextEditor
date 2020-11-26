@@ -43,17 +43,24 @@ int WindowModel::GetKeyFromCmd(int key)
 	{
 	case 8:
 	{
-		str.erase(str.length() - 1);
+		if (!str.empty())
+		{
+			str.erase(str.length() - 1, 1);
+		}
 		NotifyUpdateCmd();
 		break;
 	}
 	case 13:
 	{
 		NotifyClearCmd();
-		//парс команды
+		int command = -1;
+		command = ParseCommand();
 		str.clear();
-		//buffer = {0};
 		idx = 0;
+		if (command == STOP)
+		{
+			return -1;
+		}
 		break;
 	}
 	case 27: //ESC
@@ -64,12 +71,37 @@ int WindowModel::GetKeyFromCmd(int key)
 		return 0;
 	}
 	default:
-		str.push_back(key);
-		//str[idx] = key;
-		//buffer[idx] = key;
-		//idx++;
+		str.append(1, key);
 		NotifyUpdateCmd();
 		break;
 	}
 	return 1;
+}
+
+int WindowModel::ParseCommand()
+{
+	if (!str.empty())
+	{
+		if (str == "q!")
+		{
+			//TODO закрыть документ
+			return STOP;
+		}
+		if (str == "x")
+		{
+
+		}
+		else if (str == "w")
+		{
+
+		}
+		else
+		{
+
+		}
+	}
+}
+int WindowModel::GetKeyFromNavigation(int key)
+{
+	return 0;
 }

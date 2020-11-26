@@ -37,16 +37,21 @@ void Controller::start()
             do {
                 m_choice = wgetch(m_view->cmd_win);
                 stop = m_mymodel->GetKeyFromCmd(m_choice);  
-            } while (stop);
+            } while (stop && stop != -1);
+            if (stop == -1) {
+                global_num = 0;
+            }
         }
         if (m_mymodel->curr_status == WindowModel::NAVIGATION)
         {
             noecho();
             keypad(m_view->text_win, true);
             wmove(m_view->text_win, 0, 0);
+            int stop = 1;
             do {
                 m_choice = wgetch(m_view->text_win);
-                switch (m_choice)
+                stop = m_mymodel->GetKeyFromNavigation(m_choice);
+                /*switch (m_choice)
                 {
                 case KEY_UP:
                 {
@@ -82,9 +87,8 @@ void Controller::start()
                 default:
                     break;
                 }
+                */
             } while (m_choice != 'Q');
-            keypad(stdscr, false);
-            echo();
         }
     }
 }

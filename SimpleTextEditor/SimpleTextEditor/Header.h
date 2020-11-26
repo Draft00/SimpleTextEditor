@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include "curses.h"
+#include "MyString.h"
 
 class Observer
 {
@@ -53,21 +54,30 @@ public:
         COMMAND,
         NAVIGATION,
         SEARCH,
-        WAITING
+        WAITING,
+        EXIT
+    };
+    enum smd_command
+    {
+        STOP = 2
     };
     status curr_status = WAITING;
     std::string filename = "none";
     int num_curr_line = 0;
     int num_lines = 0;
-    std::string str;
+    STD::MyString str;
+    //std::string str;
     char buffer[560] = {0};
     int idx = 0;
 
     void SetStatus(status new_status);
     void SetFilename(const char* new_filename);
-    int GetKeyFromCmd(int key);
-
     void SetStartConfig();
+
+    int GetKeyFromCmd(int key);
+    int GetKeyFromNavigation(int key);
+
+    int ParseCommand();
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;

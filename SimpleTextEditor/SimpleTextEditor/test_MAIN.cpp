@@ -87,7 +87,7 @@ int main()
 	destroy_win(local_win);
 	getch();
 	endwin();*/
-	
+
     WindowModel Model;
     ConsoleView View(&Model);
     Controller Controller(&Model, &View);
