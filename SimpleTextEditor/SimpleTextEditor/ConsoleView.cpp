@@ -81,7 +81,7 @@ void ConsoleView::PressedKeyDown()
         {
             wscrl(text_win, 1);
             wrefresh(text_win);
-            char c = m_mymodel->file_data[m_mymodel->idx];
+            //char c = m_mymodel->file_data[m_mymodel->idx];
             size_t idx_print = m_mymodel->idx - curr_pos;
             size_t pos = m_mymodel->file_data.find("\n", idx_print);
             if (pos == STD::MyString::npos) {
@@ -150,7 +150,9 @@ void ConsoleView::PressedKeyUp()
         }
         if (y - 1 < 0)
         {
-            char c = m_mymodel->file_data[m_mymodel->idx];
+            wscrl(text_win, -1);
+            wrefresh(text_win);
+            //char c = m_mymodel->file_data[m_mymodel->idx];
             size_t idx_print = m_mymodel->idx - curr_pos;
             size_t pos = m_mymodel->file_data.find("\n", idx_print);
             if (pos == STD::MyString::npos) {
