@@ -187,7 +187,7 @@ int WindowModel::GetKeyFromNavigation(int key)
 	}
 	case KEY_DOWN:
 	{
-		NotifyPressedKeyDown();
+		m_ProcPressedKeyDown();
 		break;
 	}
 	case KEY_UP:
@@ -285,7 +285,10 @@ void WindowModel::m_ScrollDown(int curr_pos, int n)
 		return;
 	}
 	m_CountIdxFirstLine(n);
-	NotifyPrintMsg(file_data.c_str() + idx_first_line);
+	const char* ptr = file_data.c_str() + idx_first_line;
+	NotifymvPrintMsg(ptr, 0, 0);
+	//NotifymvPrintMsg("0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n2", 0, 0);
+
 	/*NotifyScroll(1);
 	//char c = m_mymodel->file_data[m_mymodel->idx];
 	size_t idx_print = idx - curr_pos;
@@ -312,7 +315,7 @@ void WindowModel::m_ProcPressedKeyDown()
 	}
 
 	int curr_pos = 0;
-	m_GetYX(&x, &y);
+	m_GetYX(&y, &x);
 
 	if (file_data[idx] == '\n') {
 		idx++;
@@ -331,9 +334,12 @@ void WindowModel::m_ProcPressedKeyDown()
 	}
 
 	char c = file_data[idx];
-	if (y + 1 > IDX_LAST_LINE)
-	{
+	if (y + 1 > IDX_LAST_LINE) {
 		m_ScrollDown(curr_pos, 1);
+		idx_last_line = idx - curr_pos;
+		num_curr_line++;
+		NotifyUpdateLineStats(num_curr_line, num_lines);
+		NotifyMoveCursor(y, curr_pos);
 	}
 	else {
 		num_curr_line++;

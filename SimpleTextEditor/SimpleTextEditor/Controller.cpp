@@ -69,7 +69,7 @@ void Controller::start()
         {
             noecho();
             keypad(m_view->text_win, true);
-            scrollok(m_view->text_win, true);
+            //scrollok(m_view->text_win, true);
             wmove(m_view->text_win, 0, 0);
             wrefresh(m_view->text_win);
             int stop = 1;
@@ -77,7 +77,7 @@ void Controller::start()
                 m_choice = wgetch(m_view->text_win);
                 stop = m_mymodel->GetKeyFromNavigation(m_choice);
             } while (stop);
-            scrollok(m_view->text_win, false);
+            //scrollok(m_view->text_win, false);
         }
     }
 }

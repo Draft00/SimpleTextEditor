@@ -327,7 +327,13 @@ void ConsoleView::PrintMessage(const char* str)
 }
 void ConsoleView::mvPrintMessage(const char* str, int y, int x)
 {
-    mvwprintw(text_win, y, x, str);
+    //int curr_x, curr_y;
+    //getyx(text_win, curr_y, curr_x);
+    //wclear(text_win);
+    //move(y, x);
+    //wprintw(text_win, str);
+    //move(curr_y, curr_x);
+    mvwprintw(text_win, y, x, str); //работает совсем не как нужно!
     wrefresh(text_win);
 }
 
