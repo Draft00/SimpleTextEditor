@@ -57,3 +57,7 @@ void Observable::NotifyPressedW()
 {
     m_view_observer->PressedW();
 }
+void Observable::NotifyPressedKeyUp()
+{
+    m_view_observer->PressedKeyUp();
+}

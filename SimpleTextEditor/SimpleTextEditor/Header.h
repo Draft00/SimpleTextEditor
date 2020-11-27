@@ -25,6 +25,7 @@ public:
     virtual void PressedB() = 0;
     virtual void PressedW() = 0;
     virtual void PressedKeyDown() = 0;
+    virtual void PressedKeyUp() = 0;
 };
 
 class Observable
@@ -45,6 +46,7 @@ public:
     void NotifyPressedB();
     void NotifyPressedW();
     void NotifyPressedKeyDown();
+    void NotifyPressedKeyUp();
 
     void notifyUpdate_cmd_line()
     {
@@ -137,6 +139,7 @@ public:
     void PressedW() override;
     void PressedB() override;
     void PressedKeyDown() override; 
+    void PressedKeyUp() override; 
 
 
     WINDOW* cmd_win = nullptr;
@@ -160,7 +163,6 @@ private:
     int x = 0;
     int y_nav = 0;
     int x_nav = 0;
-    bool stop_nav_flag = false;
 
     std::string mode_str[5] = { "NRM", "CMD", "NAV", "SRC", "..." };
 
@@ -169,7 +171,6 @@ private:
 
     void create_status_wins();
     void init_coloros_pair();
-
 };
 
 class Controller

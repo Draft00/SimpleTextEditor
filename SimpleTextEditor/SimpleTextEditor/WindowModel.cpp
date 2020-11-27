@@ -201,7 +201,8 @@ int WindowModel::GetKeyFromNavigation(int key)
 	}
 	case KEY_UP:
 	{
-
+		NotifyPressedKeyUp();
+		break;
 	}
 	case KEY_LEFT:
 	{

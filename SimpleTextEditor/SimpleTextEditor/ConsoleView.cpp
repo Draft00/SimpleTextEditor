@@ -29,7 +29,7 @@ ConsoleView::~ConsoleView()
 void ConsoleView::PressedDollar()
 {
     getyx(text_win, y, x);
-    if (m_mymodel->file_data[m_mymodel->idx] == '\n')
+    if (m_mymodel->file_data[m_mymodel->idx] == '\n') //idx, not idx+1 if line if \n
         return;
     while (m_mymodel->file_data[m_mymodel->idx] != '\n')
     {
@@ -37,6 +37,7 @@ void ConsoleView::PressedDollar()
         ++x;
     }
     m_mymodel->idx -= 1;
+    x_nav = x - 1;
     wmove(text_win, y, x - 1);
     wrefresh(text_win);
 }
@@ -45,11 +46,11 @@ void ConsoleView::PressedZero()
     getyx(text_win, y, x);
     if (x == 0)
         return;
-    while (x > 0)
-    {
+    while (x > 0) {
         m_mymodel->idx--;
         --x;
     }
+    x_nav = 0;
     wmove(text_win, y, 0);
     wrefresh(text_win);
 }
@@ -59,9 +60,6 @@ void ConsoleView::PressedKeyDown()
         int curr_pos = 0;
         getyx(text_win, y, x);
 
-        if (x > x_nav) {
-            x_nav = x;
-        }
         if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
             m_mymodel->idx++;
         }
@@ -69,7 +67,7 @@ void ConsoleView::PressedKeyDown()
 
         while (curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->file_data[m_mymodel->idx] != '\0')
         {
-            //(x_nav + 1) чтобы --curr_pos всегда давало верный шаг
+            //(x_nav + 1) чтобы --curr_pos после цикла всегда давало верный шаг
             ++curr_pos; m_mymodel->idx++;
         }
         m_mymodel->idx--;  --curr_pos;
@@ -106,6 +104,73 @@ void ConsoleView::PressedKeyDown()
     else {
         beep();
     }
+}
+void ConsoleView::PressedKeyUp()
+{
+    int temp_x = 0;
+    getyx(text_win, y, x);
+    if (m_mymodel->idx - x > 0) {
+        int curr_pos = 0;
+        //getyx(text_win, y, x);
+
+        if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
+            m_mymodel->idx--;
+            if (m_mymodel->file_data[m_mymodel->idx - 1] != '\n')
+                m_mymodel->idx--;
+        }
+        else
+        {
+            while (m_mymodel->file_data[m_mymodel->idx] != '\n') {
+                m_mymodel->idx--;
+            }
+            if (m_mymodel->idx > 0 && m_mymodel->file_data[m_mymodel->idx - 1] != '\n') {
+                m_mymodel->idx--;
+            }
+            else {
+
+            }
+                
+        }
+        if (m_mymodel->file_data[m_mymodel->idx] != '\n')
+        {
+            while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->idx > 0) {
+                m_mymodel->idx--;
+            }
+            //if (m_mymodel->idx == STD::MyString::npos) m_mymodel->idx = 0;
+            if (m_mymodel->idx != 0)
+                m_mymodel->idx++;
+        }
+        while (curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n') { //&& m_mymodel->file_data[m_mymodel->idx] != '\0') {
+            ++curr_pos; m_mymodel->idx++;
+        }
+        m_mymodel->idx--;  --curr_pos;
+        if (curr_pos == -1) {
+            m_mymodel->idx++;
+            curr_pos++;
+        }
+        if (y - 1 < 0)
+        {
+            char c = m_mymodel->file_data[m_mymodel->idx];
+            size_t idx_print = m_mymodel->idx - curr_pos;
+            size_t pos = m_mymodel->file_data.find("\n", idx_print);
+            if (pos == STD::MyString::npos) {
+                beep();
+                return;
+            }
+            STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
+            mvwprintw(text_win, y, 0, str_print.c_str());
+            m_mymodel->num_curr_line--;
+            UpdateLineStats();
+            wmove(text_win, y, curr_pos);
+        }
+        else {
+            m_mymodel->num_curr_line--;
+            UpdateLineStats();
+            wmove(text_win, y - 1, curr_pos);
+        }
+        wrefresh(text_win);
+    }
+    else beep();
 }
 void ConsoleView::PressedW()
 {
