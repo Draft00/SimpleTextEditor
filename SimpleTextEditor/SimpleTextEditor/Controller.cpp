@@ -9,8 +9,25 @@ void Controller::start()
     int global_num = 1;
 
     m_mymodel->OpenFile("test file.txt");
-    m_mymodel->NotifyPrintNewText();
+    m_mymodel->NotifyPrintMsg(m_mymodel->file_data.c_str());
     m_mymodel->curr_status = WindowModel::NAVIGATION;
+
+    //ÍÅ ÓÄÀËßÒÜ 
+    /*wmove(m_view->text_win, 14, 0);
+    wrefresh(m_view->text_win);
+    //show_panel(m_view->text_test_p);
+    wprintw(m_view->help_win, "kfkfkf");
+    show_panel(m_view->help_pannel);
+    update_panels();
+    wrefresh(m_view->help_win);
+    //show_panel(m_view->text_test_p);
+    hide_panel(m_view->help_pannel);
+    wrefresh(m_view->help_win);
+    show_panel(m_view->text_pannel);
+    update_panels();
+    wrefresh(m_view->text_win);
+    m_view->EndCmd();
+    m_view->UpdateFilename();*/
 
     while (global_num)
     {
@@ -25,6 +42,7 @@ void Controller::start()
                 case ':':
                 {
                     m_mymodel->SetStatus(WindowModel::COMMAND);
+                    m_mymodel->NotifyClearCmd();
                     break;
                 }
                 default:

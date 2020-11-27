@@ -5,24 +5,39 @@ void Observable::AddObserver(Observer* observer)
     m_view_observer = observer;
 }
 
-void Observable::NotifySetStartConfig()
+void Observable::GetViewYX(int* y, int* x)
 {
-    m_view_observer->USetStartConfig();
+    m_view_observer->PutYX(y, x);
+}
+void Observable::NotifyScroll(int n)
+{
+    m_view_observer->DoScroll(n);
+}
+void Observable::NotifyUpdateMode(const char* str)
+{
+    m_view_observer->UpdateMode(str);
 }
 
-void Observable::NotifyUpdateMode()
+void Observable::NotifyUpdateFilename(const char* filename)
 {
-    m_view_observer->UpdateMode();
+    m_view_observer->UpdateFilename(filename);
+}
+void Observable::NotifyUpdateLineStats(size_t curr_line, size_t lines)
+{
+    m_view_observer->UpdateLineStats(curr_line, lines);
 }
 
-void Observable::NotifyUpdateFilename()
+void Observable::NotifyUpdateCmd(const char* str)
 {
-    m_view_observer->UpdateFilename();
+    m_view_observer->UpdateCmd(str);
 }
-
-void Observable::NotifyUpdateCmd()
+void Observable::NotifyPrintMsg(const char* str)
 {
-    m_view_observer->UpdateCmd();
+    m_view_observer->PrintMessage(str);
+}
+void Observable::NotifymvPrintMsg(const char* str, int y, int x)
+{
+    m_view_observer->mvPrintMessage(str, y, x);
 }
 
 void Observable::NotifyClearCmd()
@@ -33,31 +48,26 @@ void Observable::NotifyEndCmd()
 {
     m_view_observer->EndCmd();
 }
-void Observable::NotifyPrintNewText()
-{
-    m_view_observer->PrintNewText();
-}
-void Observable::NotifyPressedDollar()
-{
-    m_view_observer->PressedDollar();
-}
-void Observable::NotifyPressedZero()
-{
-    m_view_observer->PressedZero();
-}
+
 void Observable::NotifyPressedKeyDown()
 {
     m_view_observer->PressedKeyDown();
 }
-void Observable::NotifyPressedB()
-{
-    m_view_observer->PressedB();
-}
-void Observable::NotifyPressedW()
-{
-    m_view_observer->PressedW();
-}
 void Observable::NotifyPressedKeyUp()
 {
     m_view_observer->PressedKeyUp();
+}
+
+void Observable::NotifyPressedb()
+{
+    //m_view_observer->Pressedb();
+}
+void Observable::NotifyPressedw()
+{
+    m_view_observer->Pressedw();
+}
+
+void Observable::NotifyMoveCursor(int y, int x)
+{
+    m_view_observer->MoveInText(y, x);
 }

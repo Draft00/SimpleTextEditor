@@ -8,55 +8,55 @@
 #include "MyString.h"
 #include "panel.h"
 
+class WindowModel;
+
 class Observer
 {
 public:
-    virtual void UpdateMode() = 0;
-    virtual void UpdateCmd() = 0;
-    virtual void UpdateLineStats() = 0;
-    virtual void USetStartConfig() = 0;
-    virtual void UpdateFilename() = 0;
+    virtual void UpdateMode(const char* str) = 0;
+    virtual void UpdateCmd(const char* str) = 0;
+    virtual void UpdateLineStats(size_t curr_line, size_t lines) = 0;
+    virtual void UpdateFilename(const char* filename) = 0;
     virtual void ClearCmd() = 0;
     virtual void EndCmd() = 0;
-    virtual void PrintNewText() = 0;
+    virtual void PrintMessage(const char* str) = 0;
+    virtual void mvPrintMessage(const char* str, int y, int x) = 0;
+    virtual void PutYX(int* y, int* x) = 0;
+    virtual void DoScroll(int n) = 0;
 
-    virtual void PressedDollar() = 0;
-    virtual void PressedZero() = 0;
-    virtual void PressedB() = 0;
-    virtual void PressedW() = 0;
+    //virtual void PressedZero() = 0;
     virtual void PressedKeyDown() = 0;
     virtual void PressedKeyUp() = 0;
+    //virtual void Pressedb() = 0;
+    virtual void Pressedw() = 0;
+
+    virtual void MoveInText(int y, int x) = 0;
 };
 
 class Observable
 {
 public:
     void AddObserver(Observer* observer);
-    void NotifySetStartConfig();
-    void NotifyUpdateMode();
-    void NotifyUpdateFilename();
-    void NotifyDeleteSymbol();
-    void NotifyUpdateCmd();
+    void NotifyUpdateMode(const char* str);
+    void NotifyUpdateLineStats(size_t curr_line, size_t lines);
+    void NotifyUpdateFilename(const char* filename);
+    void NotifyUpdateCmd(const char* str);
+    void NotifyPrintMsg(const char* str);
+    void NotifymvPrintMsg(const char* str, int y, int x);
     void NotifyClearCmd();
     void NotifyEndCmd();
-    void NotifyPrintNewText();
 
-    void NotifyPressedDollar();
-    void NotifyPressedZero();
-    void NotifyPressedB();
-    void NotifyPressedW();
+    void GetViewYX(int* y, int* x);
+
+    void NotifyMoveCursor(int y, int x);
+    void NotifyScroll(int n);
+
     void NotifyPressedKeyDown();
     void NotifyPressedKeyUp();
+    void NotifyPressedb();
+    void NotifyPressedw();
 
-    void notifyUpdate_cmd_line()
-    {
-        int size = _observers.size();
-        for (int i = 0; i < size; i++)
-        {
-            _observers[i]->UpdateCmd();
-        }
 
-    }
 private:
     Observer* m_view_observer = nullptr; 
     std::vector<Observer*> _observers;
@@ -85,6 +85,7 @@ public:
     STD::MyString filename = "none";
     size_t num_curr_line = 0;
     size_t num_lines = 0;
+    std::string mode_str[5] = { "NRM", "CMD", "NAV", "SRC", "..." };
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;
@@ -95,6 +96,11 @@ public:
     size_t idx_first_line = 0;
     size_t idx_last_line = 0;
     size_t idx = 0;
+    int x = 0;
+    int y = 0;
+    int x_nav = 0;
+    int IDX_LAST_LINE = 27;
+    int IDX_LAST_COL = 99;
 
     bool flag_changes = false;
 
@@ -112,11 +118,18 @@ public:
     void CountLines();
     void CountIdxLastLine(); 
 
+    void ProcPressedw();
+
 private:
-    float _temperatureF;
-    WINDOW* m_local_win = NULL;
+    void m_ProcPressedKeyLeft();
+    void m_ProcPressedKeyRight();
+    void m_ProcPressedDollar();
+    void m_ProcPressedZero();
+    void m_ProcPressedKeyDown();
+    void m_GetYX(int* y, int* x);
 
-
+    void m_ScrollDown(int curr_pos, int n);
+    void m_CountIdxFirstLine(int n);
 };
 
 class ConsoleView : public Observer
@@ -126,27 +139,34 @@ public:
     ~ConsoleView();
 
 
-    void UpdateMode() override;
-    void UpdateCmd() override;
-    void USetStartConfig() override;
-    void UpdateFilename() override;
+    void UpdateMode(const char* str_mode) override;
+    void UpdateCmd(const char* str) override;
+    void UpdateLineStats(size_t curr_line, size_t lines) override;
+    void UpdateFilename(const char* filename) override;
+
     void ClearCmd() override;
     void EndCmd() override;
-    void PrintNewText() override;
-    void UpdateLineStats() override;
-    void PressedDollar() override;
-    void PressedZero() override;
-    void PressedW() override;
-    void PressedB() override;
+    void PrintMessage(const char* str) override;
+    void mvPrintMessage(const char* str, int y, int x) override;
     void PressedKeyDown() override; 
     void PressedKeyUp() override; 
 
+   // void Pressedb() override;
+    void Pressedw() override;
+
+    void MoveInText(int y, int x) override;
+    void DoScroll(int n) override;
+
+    void PutYX(int* y, int* x) override;
 
     WINDOW* cmd_win = nullptr;
     WINDOW* text_win = nullptr;
     WINDOW* mode_win = nullptr;
     WINDOW* filename_win = nullptr;
     WINDOW* line_stats_win = nullptr;
+    WINDOW* help_win = nullptr;
+    PANEL* help_pannel = nullptr;
+    PANEL* text_pannel = nullptr;
 
 private:
     WindowModel* m_mymodel;
@@ -164,13 +184,13 @@ private:
     int y_nav = 0;
     int x_nav = 0;
 
-    std::string mode_str[5] = { "NRM", "CMD", "NAV", "SRC", "..." };
-
     WINDOW* create_text_win();
     WINDOW* create_cmd_win();
 
     void create_status_wins();
     void init_coloros_pair();
+    void scroll_down(int curr_pos);
+    void find_new_x_pos(int* curr_pos);
 };
 
 class Controller
