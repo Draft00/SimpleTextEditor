@@ -216,7 +216,13 @@ int WindowModel::GetKeyFromNavigation(int key)
 	{
 		break;
 	}
+	case 'g':
+	{
+		
+		break;
+	}
 	default:
+		str.append(1, key);
 		break;
 	}
 	return 1;
