@@ -302,17 +302,6 @@ size_t WindowModel::m_CountIdxFirstLineUp(int n) const
 		}
 	}
 	return curr_idx_f;
-	/*
-	size_t curr_idx_f = idx_first_line;
-	for (int i = 0; i < n; i++)
-	{
-		while (file_data[curr_idx_f] != '\n' && curr_idx_f != 0)
-			curr_idx_f--;
-		if (curr_idx_f != 0) --curr_idx_f;
-	}
-	if (curr_idx_f > 0) return curr_idx_f;
-	else return 0;
-	*/
 }
 
 bool WindowModel::m_ScrollDown(int curr_pos, int n)
@@ -382,9 +371,6 @@ bool WindowModel::m_find_compare(const char* str, size_t len, size_t pos) const
 size_t WindowModel::m_reverse_find(const char* str, size_t start_idx, size_t len_s) const
 {
 	size_t ResultPos = STD::MyString::npos;
-	if (start_idx == 0)
-		return ResultPos;
-		//pos = _length - 1;
 	if (len_s == 0)
 		return 0;
 	//return ResultPos;
