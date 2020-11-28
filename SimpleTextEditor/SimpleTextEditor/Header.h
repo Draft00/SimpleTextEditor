@@ -128,10 +128,13 @@ private:
 
     void m_GetYX(int* y, int* x);
 
+    bool m_CheckScrollDown();
     bool m_ScrollDown(int curr_pos, int n);
     bool m_ScrollUp(int curr_pos, int n);
     size_t m_CountIdxFirstLineDown(int n) const;
     size_t m_CountIdxFirstLineUp(int n) const;
+    size_t m_DropSpace(size_t idx_) const;
+    size_t m_FindSymbol(size_t idx) const;
 
     size_t m_ReversFind(const char* str, size_t start_idx) const;
     size_t m_reverse_find(const char* str, size_t start_idx, size_t len) const;
@@ -186,8 +189,10 @@ private:
     int x_start_cmd = 0;
     int y = 0;
     int x = 0;
+    int new_y = 0;
     int y_nav = 0;
     int x_nav = 0;
+
 
     WINDOW* create_text_win();
     WINDOW* create_cmd_win();

@@ -230,57 +230,96 @@ void WindowModel::m_GetYX(int* y, int* x)
 	GetViewYX(y, x);
 }
 
+bool WindowModel::m_CheckScrollDown()
+{
+	if (y > IDX_LAST_COL) {
+		/*if (idx == file_data.length() - 1) {
+			y = IDX_LAST_COL;
+			beep();
+		}*/ //такого не должно случиться
+		idx_first_line = m_CountIdxFirstLineDown(1);
+		const char* ptr = file_data.c_str() + idx_first_line;
+		NotifymvPrintMsg(ptr, 0, 0);
+		}
+	return true; 
+}
+
+bool WindowModel::m_ScrollDown(int curr_pos, int n)
+{
+	if (file_data[idx + 1] == 0) {
+		beep();
+		return false;
+	}
+	idx_first_line = m_CountIdxFirstLineDown(n);
+	const char* ptr = file_data.c_str() + idx_first_line;
+	NotifymvPrintMsg(ptr, 0, 0);
+	return true;
+}
+
 void WindowModel::m_ProcPressedKeyLeft()
 {
-	m_GetYX(&y, &x);
-	if (x == 0)
-		return;
-	--idx; --x_nav; --x;
-	NotifyMoveCursor(y, x_nav);
+	if (idx > 0, file_data[idx - 1] != '\n') {
+		if (x == 0) {
+			x = MAX_NCOLS;
+			y--;
+		}
+		x--; idx--;
+		x_nav = x;
+	}
+
+	//m_ScrollUp()
+	//NotifyMoveCursor(y, x_nav);
 }
+
 void WindowModel::m_ProcPressedKeyRight()
 {
-	m_GetYX(&y, &x);
-	char c = file_data[idx + 1];
-	if (c != '\n' && c != '\0') {
-		++idx; ++x_nav; ++x;
-		NotifyMoveCursor(y, x_nav);
+	if (idx + 1 < file_data.length() - 1 && file_data[idx + 1] != '\n') {
+		if (x == IDX_LAST_COL) {
+			x = -1;
+			y++;
+		}
+		x++; idx++; x_nav = x;
 	}
+	if (y > IDX_LAST_LINE) y = IDX_LAST_LINE;
+	NotifyMoveCursor(y, x_nav);
 }
+
 void WindowModel::m_ProcPressedDollar()
 {
-	m_GetYX(&y, &x);
-	if (file_data[idx] == '\n') //idx, not idx+1 if line if \n
-		return;
-	while (file_data[idx] != '\n') {
-		++idx;
-		++x;
-	}
-	--idx; --x; x_nav = x;
-	NotifyMoveCursor(y, x_nav);
+	//while ()
 }
 void WindowModel::m_ProcPressedZero()
 {
-	m_GetYX(&y, &x);
+	//for (; file_data[idx_first_line + offset] != '\n')
+	/*m_GetYX(&y, &x);
+
+	size_t curr_idx = idx;
+	if (file_data[idx + 1] == 0)
 	if (x == 0)
 		return;
 	while (x > 0) {
 		--idx; --x;
 	}
 	x_nav = 0; 
-	NotifyMoveCursor(y, x_nav);
+	NotifyMoveCursor(y, x_nav);*/
 }
+
 size_t WindowModel::m_CountIdxFirstLineDown(int n) const
 {
 	int curr_idx_f = idx_first_line;
+	int x = 0;
 	for (int i = 0; i < n; i++)
 	{
-		while (file_data[curr_idx_f] != '\n')
-			curr_idx_f++;
+		while (file_data[curr_idx_f] != '\n') {
+			++curr_idx_f; ++x;
+			if (x == IDX_LAST_COL) {
+				x = 0;
+				break;
+			}
+		}
 		++curr_idx_f;
 	}
 	return curr_idx_f;
-	//idx_first_line = curr_idx_f;
 }
 
 size_t WindowModel::m_CountIdxFirstLineUp(int n) const
@@ -306,14 +345,14 @@ size_t WindowModel::m_CountIdxFirstLineUp(int n) const
 
 bool WindowModel::m_ScrollDown(int curr_pos, int n)
 {
-	if (file_data[idx + 1] == 0) {
+	/*if (file_data[idx + 1] == 0) {
 		beep();
 		return false;
 	}
 	idx_first_line = m_CountIdxFirstLineDown(n);
 	const char* ptr = file_data.c_str() + idx_first_line;
 	NotifymvPrintMsg(ptr, 0, 0);
-	return true;
+	return true;*/
 }
 
 void WindowModel::m_ProcPressedKeyDown()
@@ -374,6 +413,8 @@ size_t WindowModel::m_reverse_find(const char* str, size_t start_idx, size_t len
 	if (len_s == 0)
 		return 0;
 	//return ResultPos;
+	//if (start_idx == STD::MyString::npos) //возможно, полная ерунда
+		//start_idx = file_data.length()- 1;
 	size_t len_ = file_data.length();
 	for (; start_idx > 0; --start_idx)
 	{
@@ -458,35 +499,71 @@ void WindowModel::m_ProcPressedKeyUp()
 	}
 }
 
+size_t WindowModel::m_FindSymbol(size_t idx) const
+{
+	return 0;
+}
+
+size_t WindowModel::m_DropSpace(size_t idx_) const
+{
+	while (idx_ - file_data.find(" ", idx_ + 1) == 1) idx_++; //если idx_ = npos - 1, то катастрофа. 
+	if (file_data[idx_ + 1] == '\0') {
+		beep();
+		return STD::MyString::npos;
+	}
+	else idx_++;
+	return idx;
+}
+
 void WindowModel::ProcPressedw()
 {
+	m_GetYX(&y, &x);
 	int new_x = x, new_y = y;
-	size_t temp_idx = idx;
+	size_t temp_idx = idx, idx_s = idx;
 
 	if (file_data[idx + 1] != '\0') {
 		size_t idx_ = file_data.find(" ", idx);
 		size_t idx_n = file_data.find("\n", idx);
 
-		if (idx_ < idx_n) { //_ раньше '\n'
-			if (file_data[idx_ + 1] == ' ') {
-
+		if (idx_ < idx_n) { // раньше _
+			idx_s = m_DropSpace(idx_);
+			if (idx_s == STD::MyString::npos) {
+				beep();
+				return;
 			}
-			else if (file_data[idx_ + 1] == '\0') {
+
+			if (file_data[idx_ + 1] == '\0') {
 				beep();
 				return;
 			}
 			else if (file_data[idx_ + 1] == '\n') {
+				while (1) {
+					size_t idx_n_2 = file_data.find("\n", idx);
+					size_t idx_symbol = idx_;
+					while (file_data[idx_] < 33 && file_data[idx_] > 127) idx_symbol++;
+					//if ()
+				}
+
+
+				if (file_data[idx_ + 1] != '\0') {
+					new_y++; idx_++;
+					size_t idx_n = file_data.find("\n", idx);
+				}
+				else {//TODO
+				}
+				//while ()
 
 			}
 			else {
 				idx = idx_ + 1;
-				x_nav += idx - temp_idx; x = x_nav;
+				x_nav += idx - temp_idx; x = x_nav; //прокатит чисто разницей idx потом учто не было перехода на строку.
 				NotifyMoveCursor(y, x_nav);
 			}
 
 		}
 		else if (idx_ != STD::MyString::npos) {
 			new_y++;
+			
 			if (file_data[idx_n + 1] == ' ') {
 
 			}
@@ -503,6 +580,7 @@ void WindowModel::ProcPressedw()
 				NotifyMoveCursor(new_y, x_nav);
 			}
 		}
+		else beep();
 	}
 	else beep();
 }
