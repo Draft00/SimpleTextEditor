@@ -151,6 +151,10 @@ void WindowModel::OpenFile(STD::MyString s_filename)
 		beep(); //TODO RETURN MESSAGE
 		return;
 	}
+	/*do {
+		fin.get(c);
+		file_data.append(1, c);
+	} while (!fin.eof());*/
 	while (!fin.eof()) {
 		fin.get(c);
 		file_data.append(1, c);
@@ -232,7 +236,7 @@ void WindowModel::m_GetYX(int* y, int* x)
 
 bool WindowModel::m_CheckScrollDown() const
 {
-	if (y > IDX_LAST_LINE /*&& TODO еще что-то */)
+	if (y > IDX_LAST_LINE /*&& TODO еще что-то */) 
 		return true;
 	return false;
 
@@ -241,9 +245,6 @@ bool WindowModel::m_CheckScrollUp() const
 {
 	if (y < 0 && idx - x != 0) {
 		return true;
-		//idx_first_line = m_CountIdxFirstLineUp(1);
-		//const char* ptr = file_data.c_str() + idx_first_line;
-		//NotifymvPrintMsg(ptr, 0, 0);
 	}
 	return false; 
 }
@@ -270,6 +271,7 @@ bool WindowModel::m_ScrollUp(int curr_pos, int n)
 
 void WindowModel::m_ProcPressedKeyLeft()
 {
+	if (file_data[idx] == '\n') return;
 	if (idx > 0 && file_data[idx - 1] != '\n') {
 		if (x == 0) {
 			x = MAX_NCOLS;
@@ -283,6 +285,7 @@ void WindowModel::m_ProcPressedKeyLeft()
 
 void WindowModel::m_ProcPressedKeyRight()
 {
+	if (file_data[idx] == '\n') return;
 	if (idx + 1 < file_data.length() - 1 && file_data[idx + 1] != '\n') {
 		if (x == IDX_LAST_COL) {
 			x = -1;
@@ -296,6 +299,7 @@ void WindowModel::m_ProcPressedKeyRight()
 
 void WindowModel::m_ProcPressedDollar()
 {
+	if (file_data[idx] == '\n') return;
 	while (idx + 1 < file_data.length() - 1 && file_data[idx + 1] != '\n') {
 		m_ProcPressedKeyRight();
 	}
@@ -303,6 +307,7 @@ void WindowModel::m_ProcPressedDollar()
 
 void WindowModel::m_ProcPressedZero()
 {
+	if (file_data[idx] == '\n') return;
 	while (idx > 0 && file_data[idx - 1] != '\n'){
 		m_ProcPressedKeyLeft();
 	}
@@ -312,13 +317,13 @@ size_t WindowModel::m_CountIdxFirstLineDown(int n) const
 {
 	if (idx - x == 0) return 0; //строка единственна€
 	size_t curr_idx_f = idx_first_line;
-	int x = 0;
+	int x_curr = 0;
 	for (int i = 0; i < n; i++)
 	{
 		while (file_data[curr_idx_f] != '\n') {
-			++curr_idx_f; ++x;
-			if (x == IDX_LAST_COL) {
-				x = 0;
+			++curr_idx_f; ++x_curr;
+			if (x_curr == IDX_LAST_COL) {
+				x_curr = 0;
 				break;
 			}
 		}
@@ -330,59 +335,101 @@ size_t WindowModel::m_CountIdxFirstLineDown(int n) const
 size_t WindowModel::m_CountIdxFirstLineUp(int n) const
 {
 	//todo тут вообще все
-	if (idx - x == 0) return 0; //строка единственна€
+	if (idx - x == 0) 
+		return 0; //строка единственна€, но там и так тыща проверок, вр€д ли такое случитс€.
 	size_t curr_idx_f = idx_first_line - 1;
+	if (curr_idx_f == 0 || file_data[curr_idx_f - 1] == '\n')
+		return curr_idx_f;
+	--curr_idx_f;
 	int x_curr = IDX_LAST_COL;
 	for (int i = 0; i < n; i++) {
-		while (1);
+		while (curr_idx_f != 0 && file_data[curr_idx_f] != '\n') {
+			--curr_idx_f; --x_curr;
+			if (x_curr == 0) {
+				break;
+			}
+		}
+		if (curr_idx_f > 0) ++curr_idx_f;
 	}
 	return 0;
-	/*size_t curr_idx_f = idx_first_line, next_idx = curr_idx_f;
-	for (int i = 0; i < n; i++) {
-		if (file_data[curr_idx_f] == '\n') {
-			curr_idx_f--;
-		}
-		else curr_idx_f = m_ReversFind("\n", curr_idx_f);
-
-		if (curr_idx_f != 0) {
-			next_idx = m_ReversFind("\n", curr_idx_f - 1);
-			if (next_idx == STD::MyString::npos) {
-				if (file_data[curr_idx_f - 1] == '\n') {}
-				else curr_idx_f = 0;
-			}
-			else curr_idx_f = next_idx + 1;
-		}
-	}
-	return curr_idx_f;
-	*/
 }
 
-//bool WindowModel::m_ScrollDown(int curr_pos, int n)
-//{
-//	/*if (file_data[idx + 1] == 0) {
-//		beep();
-//		return false;
-//	}
-//	idx_first_line = m_CountIdxFirstLineDown(n);
-//	const char* ptr = file_data.c_str() + idx_first_line;
-//	NotifymvPrintMsg(ptr, 0, 0);
-//	return true;*/
-//}
-
+void WindowModel::m_GotoXNav()
+{
+	int curr_pos = 0;
+	while (curr_pos < (x_nav + 1) && file_data[idx] != '\n' && file_data[idx] != '\0')
+	{
+		//(x_nav + 1) чтобы --curr_pos после цикла всегда давало верный шаг
+		++curr_pos; ++idx; ++x;
+	}
+	--idx; --curr_pos; --x;
+	if (curr_pos == -1) {
+		idx++;
+		curr_pos++; ++x;
+	}
+}
 void WindowModel::m_ProcPressedKeyDown()
 {
-	if (file_data[idx + 1] == '\0') {
-		beep();
-		return;
+	int x_nav_curr = x_nav;
+	m_ProcPressedDollar();
+	x_nav = x_nav_curr;
+	if (idx + 1 > (file_data.length() - 1)) return;
+	if (file_data[idx] == '\n') {
+		++idx;
+	}
+	else idx += 2;
+
+	x = 0; ++y; ++num_curr_line;
+	m_ScrollDown(2, 1);
+	if (y > IDX_LAST_LINE) y = IDX_LAST_LINE; //вообще не нужно, но на вс€кий случай
+	NotifyUpdateLineStats(num_curr_line, num_lines);
+	m_GotoXNav();
+	NotifyMoveCursor(y, x);
+}
+
+void WindowModel::m_ProcPressedKeyUp()
+{
+	//«ƒ≈—№ проблемы
+	if (idx - x == 0) return;
+
+	char c = file_data[idx];
+	int x_nav_curr = x_nav; 
+	m_ProcPressedZero();
+	x_nav = x_nav_curr;
+	--idx; --y; 
+	m_ScrollUp(2, 1);
+
+	if (file_data[idx - 1] != '\n') idx--;
+	
+	while (idx != 0 && file_data[idx] != '\n') {
+		--idx;
 	}
 
-	int curr_pos = 0, curr_idx = idx;
-	m_GetYX(&y, &x);
+	//после этого текущий х - Ќ≈ ноль
+
+	x = 0; --y;  --num_curr_line;
+	m_ScrollUp(2, 1);
+	if (y < 0) y = 0; //костыль?
+	NotifyUpdateLineStats(num_curr_line, num_lines);
+	m_GotoXNav();
+	NotifyMoveCursor(y, x);
+	/*
+	int curr_pos = 0;
+	size_t temp_idx = 0, next_idx = 0, curr_idx = idx;
 
 	if (file_data[idx] == '\n') {
-		idx++;
+		idx--;
 	}
-	else idx = file_data.find("\n", idx) + 1;
+	else idx = m_ReversFind("\n", idx);
+
+	if (idx != 0) {
+		next_idx = m_ReversFind("\n", idx - 1);
+		if (next_idx == STD::MyString::npos) {
+			if (file_data[idx - 1] == '\n') {}
+			else idx = 0;
+		}
+		else idx = next_idx + 1;
+	}
 
 	while (curr_pos < (x_nav + 1) && file_data[idx] != '\n' && file_data[idx] != '\0')
 	{
@@ -395,25 +442,27 @@ void WindowModel::m_ProcPressedKeyDown()
 		curr_pos++;
 	}
 
-	char c = file_data[idx];
-	if (y + 1 > IDX_LAST_LINE) {
+	if (y - 1 < 0)
+	{
 		if (m_CheckScrollDown())
-		//if (m_ScrollDown(curr_pos, 1))
+			//if (m_ScrollUp(curr_pos, 1))
 		{
-			m_CheckScrollDown();
-			idx_last_line = idx - curr_pos;
-			num_curr_line++;
+			m_ScrollDown(curr_pos, 1);
+			//idx_last_line = idx - curr_pos;
+			num_curr_line--;
 			NotifyUpdateLineStats(num_curr_line, num_lines);
 			NotifyMoveCursor(y, curr_pos);
 		}
 		else idx = curr_idx;
 	}
 	else {
-		num_curr_line++;
+		num_curr_line--;
 		NotifyUpdateLineStats(num_curr_line, num_lines);
-		NotifyMoveCursor(y + 1, curr_pos); //после этого, чтобы курсор был в текста
+		NotifyMoveCursor(y - 1, curr_pos);
 	}
+	*/
 }
+
 bool WindowModel::m_find_compare(const char* str, size_t len, size_t pos) const
 {
 	for (size_t i = 1; i < len; ++i)
@@ -453,62 +502,6 @@ size_t WindowModel::m_ReversFind(const char* str, size_t start_idx) const
 	return m_reverse_find(str, start_idx, strlen(str));
 }
 
-void WindowModel::m_ProcPressedKeyUp()
-{
-	m_GetYX(&y, &x);
-
-	if (idx - x == 0) {
-		beep();
-		return;
-	}
-
-	int curr_pos = 0;
-	size_t temp_idx = 0, next_idx = 0, curr_idx = idx;
-
-	if (file_data[idx] == '\n') {
-		idx--;
-	}
-	else idx = m_ReversFind("\n", idx);
-
-	if (idx != 0) {
-		next_idx = m_ReversFind("\n", idx - 1);
-		if (next_idx == STD::MyString::npos) {
-			if (file_data[idx - 1] == '\n') {}
-			else idx = 0;
-		}
-		else idx = next_idx + 1;
-	}
-
-	while (curr_pos < (x_nav + 1) && file_data[idx] != '\n' && file_data[idx] != '\0')
-	{
-		//(x_nav + 1) чтобы --curr_pos после цикла всегда давало верный шаг
-		++curr_pos; ++idx;
-	}
-	--idx; --curr_pos;
-	if (curr_pos == -1) {
-		idx++;
-		curr_pos++;
-	}
-
-	if (y - 1 < 0)
-	{
-		if (m_CheckScrollDown())
-		//if (m_ScrollUp(curr_pos, 1))
-		{
-			m_ScrollDown(curr_pos, 1);
-			//idx_last_line = idx - curr_pos;
-			num_curr_line--;
-			NotifyUpdateLineStats(num_curr_line, num_lines);
-			NotifyMoveCursor(y, curr_pos);
-		}
-		else idx = curr_idx;
-	}
-	else {
-		num_curr_line--;
-		NotifyUpdateLineStats(num_curr_line, num_lines);
-		NotifyMoveCursor(y - 1, curr_pos);
-	}
-}
 
 size_t WindowModel::m_FindSymbol(size_t idx) const
 {

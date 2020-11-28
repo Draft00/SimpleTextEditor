@@ -132,6 +132,7 @@ private:
     bool m_CheckScrollUp() const;
     bool m_ScrollDown(int curr_pos, int n);
     bool m_ScrollUp(int curr_pos, int n);
+    void m_GotoXNav();
     size_t m_CountIdxFirstLineDown(int n) const;
     size_t m_CountIdxFirstLineUp(int n) const;
     size_t m_DropSpace(size_t idx_) const;
