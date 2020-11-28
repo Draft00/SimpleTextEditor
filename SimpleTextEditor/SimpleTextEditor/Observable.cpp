@@ -49,10 +49,6 @@ void Observable::NotifyEndCmd()
     m_view_observer->EndCmd();
 }
 
-void Observable::NotifyPressedKeyDown()
-{
-    m_view_observer->PressedKeyDown();
-}
 void Observable::NotifyPressedKeyUp()
 {
     m_view_observer->PressedKeyUp();

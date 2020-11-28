@@ -25,7 +25,6 @@ public:
     virtual void DoScroll(int n) = 0;
 
     //virtual void PressedZero() = 0;
-    virtual void PressedKeyDown() = 0;
     virtual void PressedKeyUp() = 0;
     //virtual void Pressedb() = 0;
     virtual void Pressedw() = 0;
@@ -51,7 +50,6 @@ public:
     void NotifyMoveCursor(int y, int x);
     void NotifyScroll(int n);
 
-    void NotifyPressedKeyDown();
     void NotifyPressedKeyUp();
     void NotifyPressedb();
     void NotifyPressedw();
@@ -126,10 +124,17 @@ private:
     void m_ProcPressedDollar();
     void m_ProcPressedZero();
     void m_ProcPressedKeyDown();
+    void m_ProcPressedKeyUp();
+
     void m_GetYX(int* y, int* x);
 
-    void m_ScrollDown(int curr_pos, int n);
-    void m_CountIdxFirstLine(int n);
+    bool m_ScrollDown(int curr_pos, int n);
+    size_t m_CountIdxFirstLineDown(int n) const;
+    size_t m_CountIdxFirstLineUp(int n) const;
+
+    size_t m_ReversFind(const char* str, size_t start_idx);
+    size_t m_reverse_find(const char* str, size_t start_idx, size_t len);
+    bool m_find_compare(const char* str, size_t len, size_t pos) const;
 };
 
 class ConsoleView : public Observer
@@ -148,7 +153,6 @@ public:
     void EndCmd() override;
     void PrintMessage(const char* str) override;
     void mvPrintMessage(const char* str, int y, int x) override;
-    void PressedKeyDown() override; 
     void PressedKeyUp() override; 
 
    // void Pressedb() override;
