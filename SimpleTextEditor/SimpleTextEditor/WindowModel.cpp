@@ -404,6 +404,7 @@ void WindowModel::m_ProcPressedKeyUp()
 	while (idx != 0 && file_data[idx] != '\n') {
 		--idx;
 	}
+	//
 
 	//после этого текущий х - НЕ ноль
 
