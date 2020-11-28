@@ -230,45 +230,55 @@ void WindowModel::m_GetYX(int* y, int* x)
 	GetViewYX(y, x);
 }
 
-bool WindowModel::m_CheckScrollDown()
+bool WindowModel::m_CheckScrollDown() const
 {
-	if (y > IDX_LAST_COL) {
-		/*if (idx == file_data.length() - 1) {
-			y = IDX_LAST_COL;
-			beep();
-		}*/ //такого не должно случиться
-		idx_first_line = m_CountIdxFirstLineDown(1);
-		const char* ptr = file_data.c_str() + idx_first_line;
-		NotifymvPrintMsg(ptr, 0, 0);
-		}
-	return true; 
-}
+	if (y > IDX_LAST_LINE /*&& TODO еще что-то */)
+		return true;
+	return false;
 
+}
+bool WindowModel::m_CheckScrollUp() const
+{
+	if (y < 0 && idx - x != 0) {
+		return true;
+		//idx_first_line = m_CountIdxFirstLineUp(1);
+		//const char* ptr = file_data.c_str() + idx_first_line;
+		//NotifymvPrintMsg(ptr, 0, 0);
+	}
+	return false; 
+}
 bool WindowModel::m_ScrollDown(int curr_pos, int n)
 {
-	if (file_data[idx + 1] == 0) {
-		beep();
+	if (!m_CheckScrollDown())
 		return false;
-	}
-	idx_first_line = m_CountIdxFirstLineDown(n);
+	idx_first_line = m_CountIdxFirstLineDown(1);
 	const char* ptr = file_data.c_str() + idx_first_line;
 	NotifymvPrintMsg(ptr, 0, 0);
+	y = IDX_LAST_LINE;
+	return true;
+}
+bool WindowModel::m_ScrollUp(int curr_pos, int n)
+{
+	if (!m_CheckScrollUp())
+		return false;
+	idx_first_line = m_CountIdxFirstLineUp(1);
+	const char* ptr = file_data.c_str() + idx_first_line;
+	NotifymvPrintMsg(ptr, 0, 0);
+	y = 0;
 	return true;
 }
 
 void WindowModel::m_ProcPressedKeyLeft()
 {
-	if (idx > 0, file_data[idx - 1] != '\n') {
+	if (idx > 0 && file_data[idx - 1] != '\n') {
 		if (x == 0) {
 			x = MAX_NCOLS;
 			y--;
+			m_ScrollUp(0, 1);
 		}
-		x--; idx--;
-		x_nav = x;
+		x--; idx--; x_nav = x;
 	}
-
-	//m_ScrollUp()
-	//NotifyMoveCursor(y, x_nav);
+	NotifyMoveCursor(y, x_nav);
 }
 
 void WindowModel::m_ProcPressedKeyRight()
@@ -277,36 +287,31 @@ void WindowModel::m_ProcPressedKeyRight()
 		if (x == IDX_LAST_COL) {
 			x = -1;
 			y++;
+			m_ScrollDown(0, 1);
 		}
 		x++; idx++; x_nav = x;
 	}
-	if (y > IDX_LAST_LINE) y = IDX_LAST_LINE;
 	NotifyMoveCursor(y, x_nav);
 }
 
 void WindowModel::m_ProcPressedDollar()
 {
-	//while ()
+	while (idx + 1 < file_data.length() - 1 && file_data[idx + 1] != '\n') {
+		m_ProcPressedKeyRight();
+	}
 }
+
 void WindowModel::m_ProcPressedZero()
 {
-	//for (; file_data[idx_first_line + offset] != '\n')
-	/*m_GetYX(&y, &x);
-
-	size_t curr_idx = idx;
-	if (file_data[idx + 1] == 0)
-	if (x == 0)
-		return;
-	while (x > 0) {
-		--idx; --x;
+	while (idx > 0 && file_data[idx - 1] != '\n'){
+		m_ProcPressedKeyLeft();
 	}
-	x_nav = 0; 
-	NotifyMoveCursor(y, x_nav);*/
 }
 
 size_t WindowModel::m_CountIdxFirstLineDown(int n) const
 {
-	int curr_idx_f = idx_first_line;
+	if (idx - x == 0) return 0; //строка единственная
+	size_t curr_idx_f = idx_first_line;
 	int x = 0;
 	for (int i = 0; i < n; i++)
 	{
@@ -324,7 +329,15 @@ size_t WindowModel::m_CountIdxFirstLineDown(int n) const
 
 size_t WindowModel::m_CountIdxFirstLineUp(int n) const
 {
-	size_t curr_idx_f = idx_first_line, next_idx = curr_idx_f;
+	//todo тут вообще все
+	if (idx - x == 0) return 0; //строка единственная
+	size_t curr_idx_f = idx_first_line - 1;
+	int x_curr = IDX_LAST_COL;
+	for (int i = 0; i < n; i++) {
+		while (1);
+	}
+	return 0;
+	/*size_t curr_idx_f = idx_first_line, next_idx = curr_idx_f;
 	for (int i = 0; i < n; i++) {
 		if (file_data[curr_idx_f] == '\n') {
 			curr_idx_f--;
@@ -341,19 +354,20 @@ size_t WindowModel::m_CountIdxFirstLineUp(int n) const
 		}
 	}
 	return curr_idx_f;
+	*/
 }
 
-bool WindowModel::m_ScrollDown(int curr_pos, int n)
-{
-	/*if (file_data[idx + 1] == 0) {
-		beep();
-		return false;
-	}
-	idx_first_line = m_CountIdxFirstLineDown(n);
-	const char* ptr = file_data.c_str() + idx_first_line;
-	NotifymvPrintMsg(ptr, 0, 0);
-	return true;*/
-}
+//bool WindowModel::m_ScrollDown(int curr_pos, int n)
+//{
+//	/*if (file_data[idx + 1] == 0) {
+//		beep();
+//		return false;
+//	}
+//	idx_first_line = m_CountIdxFirstLineDown(n);
+//	const char* ptr = file_data.c_str() + idx_first_line;
+//	NotifymvPrintMsg(ptr, 0, 0);
+//	return true;*/
+//}
 
 void WindowModel::m_ProcPressedKeyDown()
 {
@@ -383,8 +397,10 @@ void WindowModel::m_ProcPressedKeyDown()
 
 	char c = file_data[idx];
 	if (y + 1 > IDX_LAST_LINE) {
-		if (m_ScrollDown(curr_pos, 1))
+		if (m_CheckScrollDown())
+		//if (m_ScrollDown(curr_pos, 1))
 		{
+			m_CheckScrollDown();
 			idx_last_line = idx - curr_pos;
 			num_curr_line++;
 			NotifyUpdateLineStats(num_curr_line, num_lines);
@@ -437,13 +453,6 @@ size_t WindowModel::m_ReversFind(const char* str, size_t start_idx) const
 	return m_reverse_find(str, start_idx, strlen(str));
 }
 
-bool WindowModel::m_ScrollUp(int curr_pos, int n)
-{
-	idx_first_line = m_CountIdxFirstLineUp(n);
-	const char* ptr = file_data.c_str() + idx_first_line;
-	NotifymvPrintMsg(ptr, 0, 0);
-	return true;
-}
 void WindowModel::m_ProcPressedKeyUp()
 {
 	m_GetYX(&y, &x);
@@ -483,8 +492,10 @@ void WindowModel::m_ProcPressedKeyUp()
 
 	if (y - 1 < 0)
 	{
-		if (m_ScrollUp(curr_pos, 1))
+		if (m_CheckScrollDown())
+		//if (m_ScrollUp(curr_pos, 1))
 		{
+			m_ScrollDown(curr_pos, 1);
 			//idx_last_line = idx - curr_pos;
 			num_curr_line--;
 			NotifyUpdateLineStats(num_curr_line, num_lines);

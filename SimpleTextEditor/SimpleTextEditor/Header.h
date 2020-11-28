@@ -128,7 +128,8 @@ private:
 
     void m_GetYX(int* y, int* x);
 
-    bool m_CheckScrollDown();
+    bool m_CheckScrollDown() const;
+    bool m_CheckScrollUp() const;
     bool m_ScrollDown(int curr_pos, int n);
     bool m_ScrollUp(int curr_pos, int n);
     size_t m_CountIdxFirstLineDown(int n) const;
