@@ -285,15 +285,34 @@ size_t WindowModel::m_CountIdxFirstLineDown(int n) const
 
 size_t WindowModel::m_CountIdxFirstLineUp(int n) const
 {
-	int curr_idx_f = idx_first_line;
+	size_t curr_idx_f = idx_first_line, next_idx = curr_idx_f;
+	for (int i = 0; i < n; i++) {
+		if (file_data[curr_idx_f] == '\n') {
+			curr_idx_f--;
+		}
+		else curr_idx_f = m_ReversFind("\n", curr_idx_f);
+
+		if (curr_idx_f != 0) {
+			next_idx = m_ReversFind("\n", curr_idx_f - 1);
+			if (next_idx == STD::MyString::npos) {
+				if (file_data[curr_idx_f - 1] == '\n') {}
+				else curr_idx_f = 0;
+			}
+			else curr_idx_f = next_idx + 1;
+		}
+	}
+	return curr_idx_f;
+	/*
+	size_t curr_idx_f = idx_first_line;
 	for (int i = 0; i < n; i++)
 	{
-		while (file_data[curr_idx_f] != '\n' && curr_idx_f > 0)
+		while (file_data[curr_idx_f] != '\n' && curr_idx_f != 0)
 			curr_idx_f--;
-		--curr_idx_f;
+		if (curr_idx_f != 0) --curr_idx_f;
 	}
 	if (curr_idx_f > 0) return curr_idx_f;
 	else return 0;
+	*/
 }
 
 bool WindowModel::m_ScrollDown(int curr_pos, int n)
@@ -360,7 +379,7 @@ bool WindowModel::m_find_compare(const char* str, size_t len, size_t pos) const
 	}
 	return true;
 }
-size_t WindowModel::m_reverse_find(const char* str, size_t start_idx, size_t len_s)
+size_t WindowModel::m_reverse_find(const char* str, size_t start_idx, size_t len_s) const
 {
 	size_t ResultPos = STD::MyString::npos;
 	if (start_idx == 0)
@@ -386,11 +405,18 @@ size_t WindowModel::m_reverse_find(const char* str, size_t start_idx, size_t len
 	return ResultPos;
 }
 
-size_t WindowModel::m_ReversFind(const char* str, size_t start_idx)
+size_t WindowModel::m_ReversFind(const char* str, size_t start_idx) const
 {
 	return m_reverse_find(str, start_idx, strlen(str));
 }
 
+bool WindowModel::m_ScrollUp(int curr_pos, int n)
+{
+	idx_first_line = m_CountIdxFirstLineUp(n);
+	const char* ptr = file_data.c_str() + idx_first_line;
+	NotifymvPrintMsg(ptr, 0, 0);
+	return true;
+}
 void WindowModel::m_ProcPressedKeyUp()
 {
 	m_GetYX(&y, &x);
@@ -401,7 +427,7 @@ void WindowModel::m_ProcPressedKeyUp()
 	}
 
 	int curr_pos = 0;
-	size_t temp_idx = 0, next_idx = 0;
+	size_t temp_idx = 0, next_idx = 0, curr_idx = idx;
 
 	if (file_data[idx] == '\n') {
 		idx--;
@@ -428,59 +454,16 @@ void WindowModel::m_ProcPressedKeyUp()
 		curr_pos++;
 	}
 
-	/*
-	while (x > 0) {
-		x--; idx--; //idx начала строки
-	}
-	if (idx != 0) {
-		idx--;
-		temp_idx = m_ReversFind("\n", idx);
-		if (temp_idx == STD::MyString::npos)
-		/*while (file_data[idx] != '\n' && idx != 0) {
-			idx--;
-		}*/
-
-	/*if (file_data[idx] == '\n') {
-		idx--;
-		*/
-		/*if (idx != 0) {
-			if (file_data[idx - 1] != '\n') {
-				temp_idx = m_ReversFind("\n", idx - 1);
-				if (temp_idx == STD::MyString::npos) {
-					//idx = 0;
-				}
-				else if (idx != temp_idx) idx = temp_idx + 1;
-			}
-		}*/
-	//}
-	//else {
-	//	temp_idx = m_ReversFind("\n", idx);
-	//	if (temp_idx == STD::MyString::npos) {
-	//		beep();
-	//		return;
-	//	}
-	//	if (temp_idx != 0) {
-	//		idx = temp_idx; temp_idx = m_ReversFind("\n", idx - 1);
-	//		if (temp_idx == STD::MyString::npos) {
-	//			//idx = temp_idx;
-	//		}
-	//		else idx = temp_idx + 1;
-	//	}
-	//	else idx = temp_idx;
-	//}
-	//while (curr_pos < (x_nav + 1) && file_data[idx] != '\n')
-	//{
-	//	++curr_pos; ++idx;
-	//}
-	//--idx; --curr_pos;
-	//if (curr_pos == -1) {
-	//	idx++; curr_pos++;
-	//}
-	
-
 	if (y - 1 < 0)
 	{
-		//TODO scroll
+		if (m_ScrollUp(curr_pos, 1))
+		{
+			//idx_last_line = idx - curr_pos;
+			num_curr_line--;
+			NotifyUpdateLineStats(num_curr_line, num_lines);
+			NotifyMoveCursor(y, curr_pos);
+		}
+		else idx = curr_idx;
 	}
 	else {
 		num_curr_line--;

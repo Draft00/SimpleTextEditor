@@ -129,11 +129,12 @@ private:
     void m_GetYX(int* y, int* x);
 
     bool m_ScrollDown(int curr_pos, int n);
+    bool m_ScrollUp(int curr_pos, int n);
     size_t m_CountIdxFirstLineDown(int n) const;
     size_t m_CountIdxFirstLineUp(int n) const;
 
-    size_t m_ReversFind(const char* str, size_t start_idx);
-    size_t m_reverse_find(const char* str, size_t start_idx, size_t len);
+    size_t m_ReversFind(const char* str, size_t start_idx) const;
+    size_t m_reverse_find(const char* str, size_t start_idx, size_t len) const;
     bool m_find_compare(const char* str, size_t len, size_t pos) const;
 };
 
