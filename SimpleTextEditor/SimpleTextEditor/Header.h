@@ -9,6 +9,7 @@
 #include "panel.h"
 
 class WindowModel;
+class Controller; 
 
 class Observer
 {
@@ -94,11 +95,14 @@ public:
     size_t idx_first_line = 0;
     size_t idx_last_line = 0;
     size_t idx = 0;
+    size_t temp_idx = 0; 
     int x = 0;
     int y = 0;
     int x_nav = 0;
     int IDX_LAST_LINE = 27;
     int IDX_LAST_COL = 99;
+    int TEXT_W_LINES = 28;
+    int TEXT_W_COLS = 100;
 
     bool flag_changes = false;
 
@@ -127,6 +131,7 @@ private:
     void m_ProcPressedKeyUp();
 
     void m_GetYX(int* y, int* x);
+    void m_CalcYX();
 
     bool m_CheckScrollDown() const;
     bool m_CheckScrollUp() const;
@@ -137,6 +142,7 @@ private:
     size_t m_CountIdxFirstLineUp(int n) const;
     size_t m_DropSpace(size_t idx_) const;
     size_t m_FindSymbol(size_t idx) const;
+    size_t m_FindStartIdxLine();
 
     size_t m_ReversFind(const char* str, size_t start_idx) const;
     size_t m_reverse_find(const char* str, size_t start_idx, size_t len) const;
@@ -146,9 +152,9 @@ private:
 class ConsoleView : public Observer
 {
 public:
-    ConsoleView(WindowModel* model);
+    ConsoleView();
     ~ConsoleView();
-
+    void AddController(Controller* Controller);
 
     void UpdateMode(const char* str_mode) override;
     void UpdateCmd(const char* str) override;
@@ -179,7 +185,7 @@ public:
     PANEL* text_pannel = nullptr;
 
 private:
-    WindowModel* m_mymodel;
+    Controller* m_myController = nullptr; 
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;

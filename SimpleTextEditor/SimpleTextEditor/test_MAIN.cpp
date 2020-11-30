@@ -151,8 +151,8 @@ int main()
     fout.close();*/
 
     WindowModel Model;
-    ConsoleView View(&Model);
-	//Model.AddObserver(&View); //почему не может?
+    ConsoleView View;
+	Model.AddObserver(&View); //почему не может?
     Controller Controller(&Model, &View);
     Controller.start();
     getch();

@@ -1,10 +1,7 @@
 #include "Header.h"
 
-ConsoleView::ConsoleView(WindowModel* model)
+ConsoleView::ConsoleView()
 {
-    m_mymodel = model;
-    m_mymodel->AddObserver(this);
-
     initscr();
     resize_term(MAX_NLINES, MAX_NCOLS); //int nlines, int ncols
 
@@ -22,6 +19,10 @@ ConsoleView::ConsoleView(WindowModel* model)
     cmd_win = create_cmd_win();
     create_status_wins();
 
+}
+void ConsoleView::AddController(Controller* Controller)
+{
+    m_myController = Controller;
 }
 
 ConsoleView::~ConsoleView()
@@ -44,111 +45,101 @@ void ConsoleView::PutYX(int* y, int* x)
 }
 
 
-void ConsoleView::find_new_x_pos(int* curr_pos)
-{
-    while (*curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->file_data[m_mymodel->idx] != '\0') {
-        (*curr_pos)++; m_mymodel->idx++;
-    }
-    m_mymodel->idx--;  (*curr_pos)--;
-    if (*curr_pos == -1) {
-        m_mymodel->idx++;
-        (*curr_pos)++;
-    }
-}
+
 void ConsoleView::DoScroll(int n)
 {
     wscrl(text_win, n);
     wrefresh(text_win);
 }
 
-void ConsoleView::scroll_down(int curr_pos)
-{
-    wscrl(text_win, 1);
-    wrefresh(text_win);
-    //char c = m_mymodel->file_data[m_mymodel->idx];
-    size_t idx_print = m_mymodel->idx - curr_pos;
-    size_t pos = m_mymodel->file_data.find("\n", idx_print);
-    if (pos == STD::MyString::npos) {
-        beep();
-        return;
-    }
-    STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
-    mvwprintw(text_win, y, 0, str_print.c_str());
-    m_mymodel->num_curr_line++;
-    //ÝÒÎ ÂÅÐÍÎ ÍÎ ÏÅÐÅÄÅËÛÂÀÒÜ
-    //UpdateLineStats();
-    wmove(text_win, y, curr_pos);
-}
+//void ConsoleView::scroll_down(int curr_pos)
+//{
+//    wscrl(text_win, 1);
+//    wrefresh(text_win);
+//    //char c = m_mymodel->file_data[m_mymodel->idx];
+//    size_t idx_print = m_mymodel->idx - curr_pos;
+//    size_t pos = m_mymodel->file_data.find("\n", idx_print);
+//    if (pos == STD::MyString::npos) {
+//        beep();
+//        return;
+//    }
+//    STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
+//    mvwprintw(text_win, y, 0, str_print.c_str());
+//    m_mymodel->num_curr_line++;
+//    //ÝÒÎ ÂÅÐÍÎ ÍÎ ÏÅÐÅÄÅËÛÂÀÒÜ
+//    //UpdateLineStats();
+//    wmove(text_win, y, curr_pos);
+//}
 
-void ConsoleView::PressedKeyUp()
-{
-    int temp_x = 0;
-    getyx(text_win, y, x);
-    if (m_mymodel->idx - x > 0) {
-        int curr_pos = 0;
-        //getyx(text_win, y, x);
-
-        if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-            m_mymodel->idx--;
-            if (m_mymodel->file_data[m_mymodel->idx - 1] != '\n')
-                m_mymodel->idx--;
-        }
-        else
-        {
-            while (m_mymodel->file_data[m_mymodel->idx] != '\n') {
-                m_mymodel->idx--;
-            }
-            if (m_mymodel->idx > 0 && m_mymodel->file_data[m_mymodel->idx - 1] != '\n') {
-                m_mymodel->idx--;
-            }
-            else {
-
-            }
-                
-        }
-        if (m_mymodel->file_data[m_mymodel->idx] != '\n')
-        {
-            while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->idx > 0) {
-                m_mymodel->idx--;
-            }
-            //if (m_mymodel->idx == STD::MyString::npos) m_mymodel->idx = 0;
-            if (m_mymodel->idx != 0)
-                m_mymodel->idx++;
-        }
-        while (curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n') { //&& m_mymodel->file_data[m_mymodel->idx] != '\0') {
-            ++curr_pos; m_mymodel->idx++;
-        }
-        m_mymodel->idx--;  --curr_pos;
-        if (curr_pos == -1) {
-            m_mymodel->idx++;
-            curr_pos++;
-        }
-        if (y - 1 < 0)
-        {
-            wscrl(text_win, -1);
-            wrefresh(text_win);
-            //char c = m_mymodel->file_data[m_mymodel->idx];
-            size_t idx_print = m_mymodel->idx - curr_pos;
-            size_t pos = m_mymodel->file_data.find("\n", idx_print);
-            if (pos == STD::MyString::npos) {
-                beep();
-                return;
-            }
-            STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
-            mvwprintw(text_win, y, 0, str_print.c_str());
-            m_mymodel->num_curr_line--;
-            //UpdateLineStats(); âåðíî
-            wmove(text_win, y, curr_pos);
-        }
-        else {
-            m_mymodel->num_curr_line--;
-            //UpdateLineStats(); âåðíî
-            wmove(text_win, y - 1, curr_pos);
-        }
-        wrefresh(text_win);
-    }
-    else beep();
-}
+//void ConsoleView::PressedKeyUp()
+//{
+//    int temp_x = 0;
+//    getyx(text_win, y, x);
+//    if (m_mymodel->idx - x > 0) {
+//        int curr_pos = 0;
+//        //getyx(text_win, y, x);
+//
+//        if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
+//            m_mymodel->idx--;
+//            if (m_mymodel->file_data[m_mymodel->idx - 1] != '\n')
+//                m_mymodel->idx--;
+//        }
+//        else
+//        {
+//            while (m_mymodel->file_data[m_mymodel->idx] != '\n') {
+//                m_mymodel->idx--;
+//            }
+//            if (m_mymodel->idx > 0 && m_mymodel->file_data[m_mymodel->idx - 1] != '\n') {
+//                m_mymodel->idx--;
+//            }
+//            else {
+//
+//            }
+//                
+//        }
+//        if (m_mymodel->file_data[m_mymodel->idx] != '\n')
+//        {
+//            while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->idx > 0) {
+//                m_mymodel->idx--;
+//            }
+//            //if (m_mymodel->idx == STD::MyString::npos) m_mymodel->idx = 0;
+//            if (m_mymodel->idx != 0)
+//                m_mymodel->idx++;
+//        }
+//        while (curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n') { //&& m_mymodel->file_data[m_mymodel->idx] != '\0') {
+//            ++curr_pos; m_mymodel->idx++;
+//        }
+//        m_mymodel->idx--;  --curr_pos;
+//        if (curr_pos == -1) {
+//            m_mymodel->idx++;
+//            curr_pos++;
+//        }
+//        if (y - 1 < 0)
+//        {
+//            wscrl(text_win, -1);
+//            wrefresh(text_win);
+//            //char c = m_mymodel->file_data[m_mymodel->idx];
+//            size_t idx_print = m_mymodel->idx - curr_pos;
+//            size_t pos = m_mymodel->file_data.find("\n", idx_print);
+//            if (pos == STD::MyString::npos) {
+//                beep();
+//                return;
+//            }
+//            STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
+//            mvwprintw(text_win, y, 0, str_print.c_str());
+//            m_mymodel->num_curr_line--;
+//            //UpdateLineStats(); âåðíî
+//            wmove(text_win, y, curr_pos);
+//        }
+//        else {
+//            m_mymodel->num_curr_line--;
+//            //UpdateLineStats(); âåðíî
+//            wmove(text_win, y - 1, curr_pos);
+//        }
+//        wrefresh(text_win);
+//    }
+//    else beep();
+//}
 
 void ConsoleView::MoveInText(int new_y, int new_x)
 {
@@ -156,89 +147,89 @@ void ConsoleView::MoveInText(int new_y, int new_x)
     wrefresh(text_win);
 }
 
-void ConsoleView::Pressedw()
-{
-    getyx(text_win, y, x);
-    if (m_mymodel->file_data[m_mymodel->idx + 1] != '\0') {
-        size_t temp_idx = m_mymodel->idx;
-
-        size_t idx_ = m_mymodel->file_data.find(" ", m_mymodel->idx);
-        size_t idx_n = m_mymodel->file_data.find("\n", m_mymodel->idx);
-        if (idx_ < idx_n && idx_ != STD::MyString::npos) {
-            if (m_mymodel->file_data[m_mymodel->idx + 1] == ' ') {
-
-            }
-            else if (m_mymodel->file_data[m_mymodel->idx + 1] == '\0') {
-                beep();
-                return;
-            }
-            else {
-                m_mymodel->idx = idx_ + 1;
-                x_nav += m_mymodel->idx - temp_idx;
-                wmove(text_win, y, x_nav);
-            }
-
-        }
-        else if (idx_ != STD::MyString::npos)
-        {
-
-        }
-        /*while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->file_data[m_mymodel->idx] != ' ') {
-            m_mymodel->idx++;
-        }
-
-        if (m_mymodel->file_data[m_mymodel->idx] == ' ') {
-            m_mymodel->idx++;
-            while (m_mymodel->file_data[m_mymodel->idx] == ' ') m_mymodel->idx++;
-            if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-                m_mymodel->idx++;
-                if (y + 2 > TEXT_W_LINES - 1) {
-                    scroll_down(0);
-                    scroll_down(0);
-                    Pressedw();
-                }
-                else {
-                    if (m_mymodel->file_data[m_mymodel->idx] == ' ') Pressedw();
-                    x_nav = 0;
-                    wmove(text_win, y + 2, x_nav);
-                }
-            }
-            else {
-                x_nav += m_mymodel->idx - temp_idx;
-                wmove(text_win, y, x_nav);
-            }
-        }
-        else if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-            m_mymodel->idx++;
-            if (y + 1 > TEXT_W_LINES - 1) {
-                scroll_down(0);
-                Pressedw();
-            }
-            else {
-                if (m_mymodel->file_data[m_mymodel->idx] == ' ') {
-                    m_mymodel->idx++;
-                    while (m_mymodel->file_data[m_mymodel->idx] == ' ') {
-                        m_mymodel->idx++;
-                    }
-                    if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-                        m_mymodel->idx++;
-                        if (y + 2 > TEXT_W_LINES - 1) {
-                            scroll_down(0);
-                            scroll_down(0);
-                            Pressedw();
-                        }
-                    }
-                }
-                else {
-                    x_nav = 0;
-                    wmove(text_win, y + 1, x_nav);
-                }
-            }
-        }*/
-        wrefresh(text_win);
-    }
-    else beep();
-}
+//void ConsoleView::Pressedw()
+//{
+//    getyx(text_win, y, x);
+//    if (m_mymodel->file_data[m_mymodel->idx + 1] != '\0') {
+//        size_t temp_idx = m_mymodel->idx;
+//
+//        size_t idx_ = m_mymodel->file_data.find(" ", m_mymodel->idx);
+//        size_t idx_n = m_mymodel->file_data.find("\n", m_mymodel->idx);
+//        if (idx_ < idx_n && idx_ != STD::MyString::npos) {
+//            if (m_mymodel->file_data[m_mymodel->idx + 1] == ' ') {
+//
+//            }
+//            else if (m_mymodel->file_data[m_mymodel->idx + 1] == '\0') {
+//                beep();
+//                return;
+//            }
+//            else {
+//                m_mymodel->idx = idx_ + 1;
+//                x_nav += m_mymodel->idx - temp_idx;
+//                wmove(text_win, y, x_nav);
+//            }
+//
+//        }
+//        else if (idx_ != STD::MyString::npos)
+//        {
+//
+//        }
+//        /*while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->file_data[m_mymodel->idx] != ' ') {
+//            m_mymodel->idx++;
+//        }
+//
+//        if (m_mymodel->file_data[m_mymodel->idx] == ' ') {
+//            m_mymodel->idx++;
+//            while (m_mymodel->file_data[m_mymodel->idx] == ' ') m_mymodel->idx++;
+//            if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
+//                m_mymodel->idx++;
+//                if (y + 2 > TEXT_W_LINES - 1) {
+//                    scroll_down(0);
+//                    scroll_down(0);
+//                    Pressedw();
+//                }
+//                else {
+//                    if (m_mymodel->file_data[m_mymodel->idx] == ' ') Pressedw();
+//                    x_nav = 0;
+//                    wmove(text_win, y + 2, x_nav);
+//                }
+//            }
+//            else {
+//                x_nav += m_mymodel->idx - temp_idx;
+//                wmove(text_win, y, x_nav);
+//            }
+//        }
+//        else if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
+//            m_mymodel->idx++;
+//            if (y + 1 > TEXT_W_LINES - 1) {
+//                scroll_down(0);
+//                Pressedw();
+//            }
+//            else {
+//                if (m_mymodel->file_data[m_mymodel->idx] == ' ') {
+//                    m_mymodel->idx++;
+//                    while (m_mymodel->file_data[m_mymodel->idx] == ' ') {
+//                        m_mymodel->idx++;
+//                    }
+//                    if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
+//                        m_mymodel->idx++;
+//                        if (y + 2 > TEXT_W_LINES - 1) {
+//                            scroll_down(0);
+//                            scroll_down(0);
+//                            Pressedw();
+//                        }
+//                    }
+//                }
+//                else {
+//                    x_nav = 0;
+//                    wmove(text_win, y + 1, x_nav);
+//                }
+//            }
+//        }*/
+//        wrefresh(text_win);
+//    }
+//    else beep();
+//}
 
 void ConsoleView::ClearCmd()
 {

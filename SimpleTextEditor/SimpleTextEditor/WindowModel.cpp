@@ -241,6 +241,7 @@ bool WindowModel::m_CheckScrollDown() const
 	return false;
 
 }
+
 bool WindowModel::m_CheckScrollUp() const
 {
 	if (y < 0 && idx - x != 0) {
@@ -269,10 +270,17 @@ bool WindowModel::m_ScrollUp(int curr_pos, int n)
 	return true;
 }
 
+void WindowModel::m_CalcYX()
+{
+	size_t sub_idx; 
+}
+
+
 void WindowModel::m_ProcPressedKeyLeft()
 {
 	if (file_data[idx] == '\n') return;
-	if (idx > 0 && file_data[idx - 1] != '\n') {
+	size_t curr_idx = idx;
+	if (curr_idx > 0 && file_data[idx - 1] != '\n') {
 		if (x == 0) {
 			x = MAX_NCOLS;
 			y--;
@@ -387,6 +395,10 @@ void WindowModel::m_ProcPressedKeyDown()
 	NotifyMoveCursor(y, x);
 }
 
+size_t WindowModel::m_FindStartIdxLine()
+{
+	return 0;
+}
 void WindowModel::m_ProcPressedKeyUp()
 {
 	//ЗДЕСЬ проблемы
