@@ -10,7 +10,7 @@ void Controller::start()
 
     m_mymodel->OpenFile("test file.txt");
     m_mymodel->NotifyPrintMsg(m_mymodel->file_data.c_str());
-    m_mymodel->curr_status = WindowModel::NAVIGATION;
+    m_mymodel->curr_status = NAVIGATION;
 
     //ÍÅ ÓÄÀËßÒÜ 
     /*wmove(m_view->text_win, 14, 0);
@@ -31,7 +31,7 @@ void Controller::start()
 
     while (global_num)
     {
-        if (m_mymodel->curr_status == WindowModel::WAITING)
+        if (m_mymodel->curr_status == WAITING)
         {
             keypad(m_view->text_win, true);
             noecho();
@@ -41,7 +41,7 @@ void Controller::start()
                 {
                 case ':':
                 {
-                    m_mymodel->SetStatus(WindowModel::COMMAND);
+                    m_mymodel->SetStatus(COMMAND);
                     m_mymodel->NotifyClearCmd();
                     break;
                 }
@@ -50,7 +50,7 @@ void Controller::start()
                 }
             } while (m_choice != ':');
         }
-        if (m_mymodel->curr_status == WindowModel::COMMAND)
+        if (m_mymodel->curr_status == COMMAND)
         {
             noecho();
             keypad(m_view->cmd_win, true);
@@ -65,7 +65,7 @@ void Controller::start()
                 global_num = 0;
             }
         }
-        if (m_mymodel->curr_status == WindowModel::NAVIGATION)
+        if (m_mymodel->curr_status == NAVIGATION)
         {
             noecho();
             keypad(m_view->text_win, true);

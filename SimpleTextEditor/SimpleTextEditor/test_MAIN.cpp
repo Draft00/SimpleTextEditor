@@ -152,9 +152,11 @@ int main()
 
     WindowModel Model;
     ConsoleView View;
+	AdapterPDCurses Adapter;
 	Model.AddObserver(&View); //почему не может?
     Controller Controller(&Model, &View);
-    Controller.start();
+	View.AddController(&Controller);
+    //Controller.start();
     getch();
     return 0;
 	

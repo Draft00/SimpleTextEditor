@@ -2,28 +2,34 @@
 
 ConsoleView::ConsoleView()
 {
-    initscr();
-    resize_term(MAX_NLINES, MAX_NCOLS); //int nlines, int ncols
+    m_myAdapter->A_initscr();
+    m_myAdapter->A_resize_term(MAX_NLINES, MAX_NCOLS);
 
-    init_coloros_pair();
+    m_init_coloros_pair();
 
-    text_win = create_text_win();
-    help_win = create_text_win();
+    text_win = m_create_text_win();
+    help_win = m_create_text_win();
 
+    //панели без адаптера, но мб я их и нафиг уберу.
     help_pannel = new_panel(help_win);
     text_pannel = new_panel(text_win);
     set_panel_userptr(text_pannel, help_pannel);
     set_panel_userptr(help_pannel, text_pannel);
     update_panels();
 
-    cmd_win = create_cmd_win();
-    create_status_wins();
+    cmd_win = m_create_cmd_win();
+    m_create_status_wins();
 
 }
 void ConsoleView::AddController(Controller* Controller)
 {
     m_myController = Controller;
 }
+void ConsoleView::AddAdapter(AdapterPDCurses* Adapter)
+{
+    m_myAdapter = Adapter;
+}
+
 
 ConsoleView::~ConsoleView()
 {
@@ -37,21 +43,24 @@ ConsoleView::~ConsoleView()
     delwin(line_stats_win);
     endwin();
 }
-void ConsoleView::PutYX(int* y, int* x)
+
+void ConsoleView::SetStartConfig()
 {
-    int y_v = 0, x_v = 0;
-    getyx(text_win, y_v, x_v);
-    (*y) = y_v; (*x) = x_v;
+    UpdateMode("...", WAITING);
+    UpdateFilename("none");
+    UpdateLineStats(0, 0);
+    PrintMessage("Use :h for help\nUse :o filename to open file");
 }
-
-
-
-void ConsoleView::DoScroll(int n)
+void ConsoleView::START()
 {
-    wscrl(text_win, n);
-    wrefresh(text_win);
-}
+    SetStartConfig();
 
+    m_myAdapter->A_raw();
+    m_myAdapter->A_keypad(stdscr, true);
+    int global_num = 1;
+
+
+}
 //void ConsoleView::scroll_down(int curr_pos)
 //{
 //    wscrl(text_win, 1);
@@ -141,196 +150,102 @@ void ConsoleView::DoScroll(int n)
 //    else beep();
 //}
 
-void ConsoleView::MoveInText(int new_y, int new_x)
-{
-    wmove(text_win, new_y, new_x);
-    wrefresh(text_win);
-}
-
-//void ConsoleView::Pressedw()
-//{
-//    getyx(text_win, y, x);
-//    if (m_mymodel->file_data[m_mymodel->idx + 1] != '\0') {
-//        size_t temp_idx = m_mymodel->idx;
-//
-//        size_t idx_ = m_mymodel->file_data.find(" ", m_mymodel->idx);
-//        size_t idx_n = m_mymodel->file_data.find("\n", m_mymodel->idx);
-//        if (idx_ < idx_n && idx_ != STD::MyString::npos) {
-//            if (m_mymodel->file_data[m_mymodel->idx + 1] == ' ') {
-//
-//            }
-//            else if (m_mymodel->file_data[m_mymodel->idx + 1] == '\0') {
-//                beep();
-//                return;
-//            }
-//            else {
-//                m_mymodel->idx = idx_ + 1;
-//                x_nav += m_mymodel->idx - temp_idx;
-//                wmove(text_win, y, x_nav);
-//            }
-//
-//        }
-//        else if (idx_ != STD::MyString::npos)
-//        {
-//
-//        }
-//        /*while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->file_data[m_mymodel->idx] != ' ') {
-//            m_mymodel->idx++;
-//        }
-//
-//        if (m_mymodel->file_data[m_mymodel->idx] == ' ') {
-//            m_mymodel->idx++;
-//            while (m_mymodel->file_data[m_mymodel->idx] == ' ') m_mymodel->idx++;
-//            if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-//                m_mymodel->idx++;
-//                if (y + 2 > TEXT_W_LINES - 1) {
-//                    scroll_down(0);
-//                    scroll_down(0);
-//                    Pressedw();
-//                }
-//                else {
-//                    if (m_mymodel->file_data[m_mymodel->idx] == ' ') Pressedw();
-//                    x_nav = 0;
-//                    wmove(text_win, y + 2, x_nav);
-//                }
-//            }
-//            else {
-//                x_nav += m_mymodel->idx - temp_idx;
-//                wmove(text_win, y, x_nav);
-//            }
-//        }
-//        else if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-//            m_mymodel->idx++;
-//            if (y + 1 > TEXT_W_LINES - 1) {
-//                scroll_down(0);
-//                Pressedw();
-//            }
-//            else {
-//                if (m_mymodel->file_data[m_mymodel->idx] == ' ') {
-//                    m_mymodel->idx++;
-//                    while (m_mymodel->file_data[m_mymodel->idx] == ' ') {
-//                        m_mymodel->idx++;
-//                    }
-//                    if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-//                        m_mymodel->idx++;
-//                        if (y + 2 > TEXT_W_LINES - 1) {
-//                            scroll_down(0);
-//                            scroll_down(0);
-//                            Pressedw();
-//                        }
-//                    }
-//                }
-//                else {
-//                    x_nav = 0;
-//                    wmove(text_win, y + 1, x_nav);
-//                }
-//            }
-//        }*/
-//        wrefresh(text_win);
-//    }
-//    else beep();
-//}
-
 void ConsoleView::ClearCmd()
 {
-    werase(cmd_win);
-    waddch(cmd_win, ':');
-    wrefresh(cmd_win);
+    m_myAdapter->A_werase(cmd_win);
+    m_myAdapter->A_wprintw(mode_win, ":");
+    m_myAdapter->A_wrefresh(cmd_win);
 }
 
 void ConsoleView::EndCmd()
 {
-    werase(cmd_win);
-    wrefresh(cmd_win);
+    m_myAdapter->A_werase(cmd_win);
+    m_myAdapter->A_wrefresh(cmd_win);
 }
 
-void ConsoleView::UpdateMode(const char* str)
+void ConsoleView::UpdateMode(const STD::MyString& mode, status new_status)
 {
-    werase(mode_win);
-    wprintw(mode_win, str);
-    wrefresh(mode_win);
+    m_myAdapter->A_werase(mode_win);
+    m_myAdapter->A_wprintw(mode_win, mode);
+    m_myAdapter->A_wrefresh(mode_win);
+    curr_status = new_status;
 }
 
-void ConsoleView::UpdateFilename(const char* filename)
+void ConsoleView::UpdateFilename(const STD::MyString& filename)
 {
-    werase(filename_win);
-    wprintw(filename_win, filename);
-    wrefresh(filename_win);
+    m_myAdapter->A_werase(filename_win);
+    m_myAdapter->A_wprintw(filename_win, filename);
+    m_myAdapter->A_wrefresh(filename_win);
 }
 
-void ConsoleView::PrintMessage(const char* str)
+void ConsoleView::PrintMessage(const STD::MyString& str)
 {
-    wclear(text_win);
-    wprintw(text_win, str);
-    wrefresh(text_win);
+    m_myAdapter->A_werase(text_win);
+    m_myAdapter->A_wprintw(text_win, str.c_str());
+    m_myAdapter->A_wrefresh(text_win);
 }
+
+//возможно, удалить
 void ConsoleView::mvPrintMessage(const char* str, int y, int x)
 {
-    //int curr_x, curr_y;
-    //getyx(text_win, curr_y, curr_x);
-    //wclear(text_win);
-    //move(y, x);
-    //wprintw(text_win, str);
-    //move(curr_y, curr_x);
-    mvwprintw(text_win, y, x, str); //работает совсем не как нужно!
+    mvwprintw(text_win, y, x, str); //работает совсем не как нужно! //а мб и работает
     wrefresh(text_win);
 }
 
 void ConsoleView::UpdateLineStats(size_t curr_line, size_t lines)
 {
-    wclear(line_stats_win);
-    wprintw(line_stats_win, "Line: %ld/%ld", curr_line, lines);
-    wrefresh(line_stats_win);
+    m_myAdapter->A_werase(line_stats_win);
+    m_myAdapter->A_printwLines(line_stats_win, "Line: %ld/%ld", curr_line, lines);
+    m_myAdapter->A_wrefresh(line_stats_win);
 }
 
-void ConsoleView::UpdateCmd(const char* str)
+void ConsoleView::UpdateCmd(const STD::MyString& str)
 {
-    werase(cmd_win);
-    waddch(cmd_win, ':');
-    wprintw(cmd_win, str);
-    wrefresh(cmd_win);
+    m_myAdapter->A_werase(cmd_win);
+    m_myAdapter->A_wprintw(cmd_win, ":");
+    m_myAdapter->A_wprintw(cmd_win, str);
+    m_myAdapter->A_wrefresh(cmd_win);
 }
-
 
 /*
     private methods
 */
-WINDOW* ConsoleView::create_cmd_win()
+WINDOW* ConsoleView::m_create_cmd_win()
 {
     WINDOW* cmd_win;
-    cmd_win = newwin(1, MAX_NCOLS, MAX_NLINES-1, 0);
-    wbkgd(cmd_win, COLOR_PAIR(1));
-    wrefresh(cmd_win);
+    cmd_win = m_myAdapter->A_newwin(1, MAX_NCOLS, MAX_NLINES - 1, 0);
+    m_myAdapter->A_wbkgd(cmd_win, COLOR_PAIR(1));
+    m_myAdapter->A_wrefresh(cmd_win);
     return cmd_win;
 }
 
-WINDOW* ConsoleView::create_text_win()
+WINDOW* ConsoleView::m_create_text_win()
 {
     WINDOW* text_win;
-    text_win = newwin(TEXT_W_LINES, TEXT_W_COLS, 0, 0);
-    wbkgd(text_win, COLOR_PAIR(2));
-    wrefresh(text_win);
+    text_win = m_myAdapter->A_newwin(TEXT_W_LINES, TEXT_W_COLS, 0, 0);
+    m_myAdapter->A_wbkgd(text_win, COLOR_PAIR(2));
+    m_myAdapter->A_wrefresh(text_win);
     return text_win;
 }
 
-void ConsoleView::init_coloros_pair()
+void ConsoleView::m_init_coloros_pair()
 {
-    start_color();
-    init_pair(1, COLOR_BLACK, COLOR_CYAN);
-    init_pair(2, COLOR_WHITE, COLOR_BLACK);
-    init_pair(3, COLOR_BLACK, COLOR_MAGENTA);
-    init_pair(4, COLOR_BLACK, COLOR_WHITE);
+    m_myAdapter->A_start_color();
+    m_myAdapter->A_init_pair(1, COLOR_BLACK, COLOR_CYAN);
+    m_myAdapter->A_init_pair(2, COLOR_WHITE, COLOR_BLACK);
+    m_myAdapter->A_init_pair(3, COLOR_BLACK, COLOR_MAGENTA);
+    m_myAdapter->A_init_pair(4, COLOR_BLACK, COLOR_WHITE);
 }
 
-void ConsoleView::create_status_wins()
+void ConsoleView::m_create_status_wins()
 {
-    mode_win = newwin(1, 4, MAX_NLINES - 2, 0);
-    wbkgd(mode_win, COLOR_PAIR(3));
-    wrefresh(mode_win);
-    filename_win = newwin(1, 30, MAX_NLINES - 2, 4);
-    wbkgd(filename_win, COLOR_PAIR(2));
-    wrefresh(filename_win);
-    line_stats_win = newwin(1, MAX_NCOLS - 34, MAX_NLINES - 2, 34);
-    wbkgd(line_stats_win, COLOR_PAIR(3));
-    wrefresh(line_stats_win);
+    mode_win = m_myAdapter->A_newwin(1, 4, MAX_NLINES - 2, 0);
+    m_myAdapter->A_wbkgd(mode_win, COLOR_PAIR(3));
+    m_myAdapter->A_wrefresh(mode_win);
+    filename_win = m_myAdapter->A_newwin(1, 30, MAX_NLINES - 2, 4);
+    m_myAdapter->A_wbkgd(filename_win, COLOR_PAIR(2));
+    m_myAdapter->A_wrefresh(filename_win);
+    line_stats_win = m_myAdapter->A_newwin(1, MAX_NCOLS - 34, MAX_NLINES - 2, 34);
+    m_myAdapter->A_wbkgd(line_stats_win, COLOR_PAIR(3));
+    m_myAdapter->A_wrefresh(line_stats_win);
 }

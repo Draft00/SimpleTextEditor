@@ -6,7 +6,17 @@
 #include <fstream>
 #include "curses.h"
 #include "MyString.h"
+#include "AdapterLib.h"
 #include "panel.h"
+
+enum status {
+    NORMAL = 0,
+    COMMAND,
+    NAVIGATION,
+    SEARCH,
+    WAITING,
+    EXIT
+};
 
 class WindowModel;
 class Controller; 
@@ -14,23 +24,20 @@ class Controller;
 class Observer
 {
 public:
-    virtual void UpdateMode(const char* str) = 0;
-    virtual void UpdateCmd(const char* str) = 0;
+    virtual void UpdateMode(const STD::MyString& mode, status new_status) = 0;
+    virtual void UpdateFilename(const STD::MyString& filename) = 0;
+
+    virtual void UpdateCmd(const STD::MyString& str) = 0;
+
     virtual void UpdateLineStats(size_t curr_line, size_t lines) = 0;
-    virtual void UpdateFilename(const char* filename) = 0;
     virtual void ClearCmd() = 0;
     virtual void EndCmd() = 0;
-    virtual void PrintMessage(const char* str) = 0;
+    virtual void PrintMessage(const STD::MyString&) = 0;
     virtual void mvPrintMessage(const char* str, int y, int x) = 0;
-    virtual void PutYX(int* y, int* x) = 0;
-    virtual void DoScroll(int n) = 0;
 
-    //virtual void PressedZero() = 0;
     virtual void PressedKeyUp() = 0;
-    //virtual void Pressedb() = 0;
     virtual void Pressedw() = 0;
 
-    virtual void MoveInText(int y, int x) = 0;
 };
 
 class Observable
@@ -58,7 +65,6 @@ public:
 
 private:
     Observer* m_view_observer = nullptr; 
-    std::vector<Observer*> _observers;
 };
 
 class WindowModel : public Observable
@@ -67,14 +73,6 @@ public:
     WindowModel();
     ~WindowModel();
 
-    enum status {
-        NORMAL = 0,
-        COMMAND,
-        NAVIGATION,
-        SEARCH,
-        WAITING,
-        EXIT
-    };
     enum smd_command
     {
         STOP = 2
@@ -118,7 +116,6 @@ public:
     void SaveFile();
     void SaveFile(STD::MyString s_filename);
     void CountLines();
-    void CountIdxLastLine(); 
 
     void ProcPressedw();
 
@@ -155,25 +152,23 @@ public:
     ConsoleView();
     ~ConsoleView();
     void AddController(Controller* Controller);
+    void AddAdapter(AdapterPDCurses* Adapter);
 
-    void UpdateMode(const char* str_mode) override;
-    void UpdateCmd(const char* str) override;
+    void START();
+    void SetStartConfig();
+
+    void UpdateMode(const STD::MyString& mode, status new_status) override;
+    void UpdateCmd(const STD::MyString& str) override;
     void UpdateLineStats(size_t curr_line, size_t lines) override;
-    void UpdateFilename(const char* filename) override;
+    void UpdateFilename(const STD::MyString& filename) override;
 
     void ClearCmd() override;
     void EndCmd() override;
-    void PrintMessage(const char* str) override;
+    void PrintMessage(const STD::MyString& str) override;
     void mvPrintMessage(const char* str, int y, int x) override;
     void PressedKeyUp() override; 
 
-   // void Pressedb() override;
-    void Pressedw() override;
 
-    void MoveInText(int y, int x) override;
-    void DoScroll(int n) override;
-
-    void PutYX(int* y, int* x) override;
 
     WINDOW* cmd_win = nullptr;
     WINDOW* text_win = nullptr;
@@ -184,8 +179,11 @@ public:
     PANEL* help_pannel = nullptr;
     PANEL* text_pannel = nullptr;
 
+    status curr_status = WAITING;
+
 private:
     Controller* m_myController = nullptr; 
+    AdapterPDCurses* m_myAdapter = nullptr; 
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;
@@ -201,14 +199,10 @@ private:
     int y_nav = 0;
     int x_nav = 0;
 
-
-    WINDOW* create_text_win();
-    WINDOW* create_cmd_win();
-
-    void create_status_wins();
-    void init_coloros_pair();
-    void scroll_down(int curr_pos);
-    void find_new_x_pos(int* curr_pos);
+    WINDOW* m_create_text_win();
+    WINDOW* m_create_cmd_win();
+    void m_create_status_wins();
+    void m_init_coloros_pair();
 };
 
 class Controller
