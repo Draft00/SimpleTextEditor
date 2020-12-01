@@ -9,18 +9,20 @@ WindowModel::~WindowModel()
 {
 }
 
+
 void WindowModel::SetStartConfig()
 {
-	NotifyUpdateMode(mode_str[curr_status].c_str());
+	/*NotifyUpdateMode(mode_str[curr_status].c_str());
 	NotifyUpdateFilename(filename.c_str());
 	NotifyUpdateLineStats(num_curr_line, num_lines);
 	char hello_message[] = "Use :h for help\nUse :o filename to open file";
-	NotifyPrintMsg(hello_message);
+	NotifyPrintMsg(hello_message);*/
 }
+
 void WindowModel::SetStatus(status new_status)
 {
 	curr_status = new_status;
-	NotifyUpdateMode(mode_str[new_status].c_str());
+	NotifyUpdateMode(mode_str[new_status], new_status);
 }
 
 void WindowModel::SetFilename(const char* new_filename)
@@ -29,17 +31,54 @@ void WindowModel::SetFilename(const char* new_filename)
 	NotifyUpdateFilename(new_filename);
 }
 
+void WindowModel::m_ProcKeyInWaiting(int key)
+{
+	switch (key)
+	{
+	case ':':
+	{
+		SetStatus(COMMAND);
+		NotifyClearCmd();
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void WindowModel::GetKeyFromController(int key)
+{
+	switch (curr_status)
+	{
+	case WAITING:
+	{
+		m_ProcKeyInWaiting(key);
+		break;
+	}
+	case NAVIGATION:
+	{
+		GetKeyFromNavigation(key);
+		break;
+	}
+	case COMMAND:
+	{
+		GetKeyFromCmd(key);
+		break;
+	}
+	default:
+		break;
+	}
+}
 int WindowModel::GetKeyFromCmd(int key)
 {
 	switch (key)
 	{
 	case 8:
 	{
-		if (!str.empty())
-		{
+		if (!str.empty()) {
 			str.erase(str.length() - 1, 1);
 		}
-		NotifyUpdateCmd(str.c_str());
+		NotifyUpdateCmd(str);
 		break;
 	}
 	case 13:
@@ -49,7 +88,9 @@ int WindowModel::GetKeyFromCmd(int key)
 		command = ParseCommand();
 		str.clear();
 		if (command == STOP) {
-			return -1;
+			curr_status = EXIT;
+			NotifyUpdateMode("...", EXIT);
+			//return -1;
 		}
 		break;
 	}
@@ -63,7 +104,7 @@ int WindowModel::GetKeyFromCmd(int key)
 	}
 	default:
 		str.append(1, key);
-		NotifyUpdateCmd(str.c_str());
+		NotifyUpdateCmd(str);
 		break;
 	}
 	return 1;
@@ -79,9 +120,9 @@ int WindowModel::ParseCommand()
 		else if (str == "q") {
 			if (flag_changes == 1) {
 				beep(); //TODO print message
+				return 1;
 			}
 			return STOP;
-
 		}
 		else if (str == "x") {
 			SaveFile();
@@ -161,9 +202,9 @@ void WindowModel::OpenFile(STD::MyString s_filename)
 	}
 	fin.close();
 	filename = s_filename;
-	NotifyUpdateFilename(s_filename.c_str());
-	CountLines();
-	NotifyUpdateLineStats(num_curr_line, num_lines);
+	NotifyUpdateFilename(s_filename);
+	//CountLines();
+	//NotifyUpdateLineStats(num_curr_line, num_lines);
 }
 
 void WindowModel::CountLines()
@@ -182,31 +223,33 @@ int WindowModel::GetKeyFromNavigation(int key)
 	switch (key)
 	{
 	case '$': {
-		m_ProcPressedDollar();
+		SendNavigation(file_data, idx, key);
 		break;
 	}
 	case '0': {
-		m_ProcPressedZero();
+		SendNavigation(file_data, idx, key);
 		break;
 	}
 	case KEY_DOWN:
 	{
-		m_ProcPressedKeyDown();
+		SendNavigation(file_data, idx, key);
+		//m_ProcPressedKeyDown();
 		break;
 	}
 	case KEY_UP:
 	{
-		m_ProcPressedKeyUp();
+		SendNavigation(file_data, idx, key);
+		//m_ProcPressedKeyUp();
 		break;
 	}
 	case KEY_LEFT:
 	{
-		m_ProcPressedKeyLeft();
+		SendNavigation(file_data, idx, key);
 		break;
 	}
 	case KEY_RIGHT:
 	{
-		m_ProcPressedKeyRight();
+		SendNavigation(file_data, idx, key);
 		break;
 	}
 	case 'b':
@@ -220,18 +263,13 @@ int WindowModel::GetKeyFromNavigation(int key)
 	}
 	case 'g':
 	{
-		//NotifyPressedg();
+		SendNavigation(file_data, idx, key);
 		break;
 	}
 	default:
-		//str.append(1, key);
 		break;
 	}
 	return 1;
-}
-void WindowModel::m_GetYX(int* y, int* x)
-{
-	GetViewYX(y, x);
 }
 
 bool WindowModel::m_CheckScrollDown() const
@@ -270,10 +308,6 @@ bool WindowModel::m_ScrollUp(int curr_pos, int n)
 	return true;
 }
 
-void WindowModel::m_CalcYX()
-{
-	size_t sub_idx; 
-}
 
 
 void WindowModel::m_ProcPressedKeyLeft()
@@ -533,7 +567,7 @@ size_t WindowModel::m_DropSpace(size_t idx_) const
 
 void WindowModel::ProcPressedw()
 {
-	m_GetYX(&y, &x);
+	//m_GetYX(&y, &x);
 	int new_x = x, new_y = y;
 	size_t temp_idx = idx, idx_s = idx;
 

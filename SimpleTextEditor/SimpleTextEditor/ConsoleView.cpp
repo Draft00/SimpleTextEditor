@@ -2,12 +2,17 @@
 
 ConsoleView::ConsoleView()
 {
+    //m_myAdapter->A_initscr();
+   //m_myAdapter->A_resize_term(MAX_NLINES, MAX_NCOLS);
+
     m_myAdapter->A_initscr();
     m_myAdapter->A_resize_term(MAX_NLINES, MAX_NCOLS);
+    //refresh();
 
     m_init_coloros_pair();
 
     text_win = m_create_text_win();
+    curr_win = text_win;
     help_win = m_create_text_win();
 
     //панели без адаптера, но мб € их и нафиг уберу.
@@ -44,6 +49,22 @@ ConsoleView::~ConsoleView()
     endwin();
 }
 
+void ConsoleView::UpdateVector(const STD::MyString& str)
+{
+    table.clear();
+    for (size_t i = 0; i < str.length(); ) {
+        for (size_t k = 0; i + k < str.length(); k++) {
+            if (str[i + k] == '\n' || (k % MAX_NCOLS) == MAX_NCOLS - 1) {
+                table.push_back(std::vector<int>());
+                table[table.size() - 1].push_back(i);
+                table[table.size() - 1].push_back(i + k);
+                i += k + 1;
+                break;
+            }
+        }
+     }
+}
+
 void ConsoleView::SetStartConfig()
 {
     UpdateMode("...", WAITING);
@@ -51,15 +72,197 @@ void ConsoleView::SetStartConfig()
     UpdateLineStats(0, 0);
     PrintMessage("Use :h for help\nUse :o filename to open file");
 }
+void ConsoleView::TEST_NAVI()
+{
+    curr_status = NAVIGATION;
+    m_myController->TEST();
+}
+
 void ConsoleView::START()
 {
     SetStartConfig();
 
     m_myAdapter->A_raw();
     m_myAdapter->A_keypad(stdscr, true);
-    int global_num = 1;
+    m_myAdapter->A_noecho();
+    int global_num = 1, choice = 0;
 
+    TEST_NAVI();
 
+    while (curr_status != EXIT)
+    {
+        //choice = wgetch(curr_win);
+
+        if (curr_status == WAITING) {
+            m_myAdapter->A_keypad(text_win, true);
+            //m_myAdapter->A_noecho();
+            while (curr_status == WAITING) {
+                choice = m_myAdapter->A_wgetch(text_win);
+                m_myController->GetKeyFromView(choice);
+            }
+        }
+        if (curr_status == COMMAND) {
+            m_myAdapter->A_wmove(cmd_win, 0, 1);
+            m_myAdapter->A_wrefresh(cmd_win);
+            m_myAdapter->A_keypad(cmd_win, true);
+            while (curr_status == COMMAND) {
+                choice = m_myAdapter->A_wgetch(text_win);
+                m_myController->GetKeyFromView(choice);
+            }
+        }
+        if (curr_status == NAVIGATION) {
+            m_myAdapter->A_wrefresh(text_win);
+            m_myAdapter->A_wmove(text_win, 0, 0);
+            m_myAdapter->A_keypad(text_win, true);
+            while (curr_status == NAVIGATION) {
+                choice = m_myAdapter->A_wgetch(text_win);
+                m_myController->GetKeyFromView(choice);
+            }
+        }
+    }
+}
+void ConsoleView::PutModelNewIdx(size_t new_idx)
+{
+    m_myController->PutModelNewIdx(new_idx);
+}
+void ConsoleView::KeyNavigation(const STD::MyString& str, size_t idx, int command)
+{
+    switch (command)
+    {
+    case KEY_LEFT: {
+        m_ProcPressedKeyLeft();
+        PutModelNewIdx(new_idx);
+        break;
+    }
+    case KEY_RIGHT: {
+        m_ProcPressedKeyRight();
+        PutModelNewIdx(new_idx);
+        break;
+    }
+    case '$': {
+        m_ProcPressedDollar(str, idx);
+        PutModelNewIdx(new_idx);
+        break;
+    }
+    case '0': {
+        m_ProcPressedZero();
+        PutModelNewIdx(new_idx);
+        break;
+    }
+    case KEY_DOWN:
+    {
+        m_ProcPressedKeyDown(str, idx);
+        PutModelNewIdx(new_idx);
+        break;
+    }
+    case KEY_UP:
+    {
+        m_ProcPressedKeyUp(str, idx);
+        PutModelNewIdx(new_idx);
+        //m_ProcPressedKeyUp();
+        break;
+    }
+    case 'g':
+    {
+        int c = m_myAdapter->A_wgetch(text_win);
+        if (c == 'g') {
+            m_ProcPressedKeygg(str, idx);
+            PutModelNewIdx(new_idx);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+void ConsoleView::m_ProcPressedKeyLeft() //гул€ем только по линии консоли, не по строке. скролл не нужен.
+{
+    getyx(text_win, y, x);
+    if (x == 0) return;
+    m_myAdapter->A_wmove(text_win, y, x - 1);
+    m_myAdapter->A_wrefresh(text_win);
+    --new_idx; --x_nav;
+}
+void ConsoleView::m_ProcPressedKeyRight()
+{
+    getyx(text_win, y, x);
+    if (table[m_TableYFirstLine + y][LAST_IDX_LINE] == x) return;
+    m_myAdapter->A_wmove(text_win, y, x + 1);
+    m_myAdapter->A_wrefresh(text_win);
+    ++new_idx; ++x_nav;
+}
+void ConsoleView::m_ProcPressedDollar(const STD::MyString& str, size_t idx)
+{
+    getyx(text_win, y, x);
+    int new_x = table[m_TableYFirstLine + y][LAST_IDX_LINE] - table[m_TableYFirstLine + y][FIRST_IDX_LINE];
+    if (new_x == x) return;
+    m_myAdapter->A_wmove(text_win, y, new_x);
+    m_myAdapter->A_wrefresh(text_win);
+    x_nav = new_x;
+    new_idx = table[m_TableYFirstLine + y][LAST_IDX_LINE];
+}
+void ConsoleView::m_ProcPressedZero()
+{
+    getyx(text_win, y, x);
+    int new_x = 0;
+    if (new_x == x) return;
+    m_myAdapter->A_wmove(text_win, y, new_x);
+    m_myAdapter->A_wrefresh(text_win);
+    x_nav = new_x;
+    new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE];
+}
+
+void ConsoleView::m_ProcPressedKeyDown(const STD::MyString& str, size_t idx)
+{
+    if (y + m_TableYFirstLine + 1 == table.size()) return; //это последн€€ строка
+    getyx(text_win, y, x);
+    //int curr_x = x, curr_y = y;
+    if (y + 1 > LAST_Y) {
+        ++m_TableYFirstLine;
+        m_myAdapter->A_wmove(text_win, 0, 0);
+        m_myAdapter->A_wprintw(text_win, str.c_str() + table[m_TableYFirstLine][FIRST_IDX_LINE]);
+        m_myAdapter->A_wrefresh(text_win);
+    }
+    else y = y + 1;
+    int new_x = table[m_TableYFirstLine + y][LAST_IDX_LINE] - table[m_TableYFirstLine + y][FIRST_IDX_LINE];
+    if (new_x > x_nav) {
+        m_myAdapter->A_wmove(text_win, y, x_nav);
+    }
+    else m_myAdapter->A_wmove(text_win, y, new_x);
+    m_myAdapter->A_wrefresh(text_win);
+    getyx(text_win, y, x);
+    new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
+}
+void ConsoleView::m_ProcPressedKeyUp(const STD::MyString& str, size_t idx)
+{
+    if (y + m_TableYFirstLine - 1 < 0) return; //это перва€ строка
+    getyx(text_win, y, x);
+    if (y - 1 < 0) {
+        --m_TableYFirstLine;
+        m_myAdapter->A_wmove(text_win, 0, 0);
+        m_myAdapter->A_wprintw(text_win, str.c_str() + table[m_TableYFirstLine][FIRST_IDX_LINE]);
+        m_myAdapter->A_wrefresh(text_win);
+    }
+    else y = y - 1;
+    int new_x = table[m_TableYFirstLine + y][LAST_IDX_LINE] - table[m_TableYFirstLine + y][FIRST_IDX_LINE];
+    if (new_x > x_nav) {
+        m_myAdapter->A_wmove(text_win, y, x_nav);
+    }
+    else m_myAdapter->A_wmove(text_win, y, new_x);
+    m_myAdapter->A_wrefresh(text_win);
+    getyx(text_win, y, x);
+    new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
+}
+void ConsoleView::m_ProcPressedKeygg(const STD::MyString& str, size_t idx)
+{
+    x = 0; y = 0; x_nav = 0;
+    m_TableYFirstLine = 0;
+    int new_idx = 0;
+    m_myAdapter->A_wmove(text_win, 0, 0);
+    m_myAdapter->A_wprintw(text_win, str.c_str() + table[m_TableYFirstLine][FIRST_IDX_LINE]);
+    m_myAdapter->A_wrefresh(text_win);
+    m_myAdapter->A_wmove(text_win, 0, 0);
+    m_myAdapter->A_wrefresh(text_win);
 }
 //void ConsoleView::scroll_down(int curr_pos)
 //{
@@ -80,8 +283,8 @@ void ConsoleView::START()
 //    wmove(text_win, y, curr_pos);
 //}
 
-//void ConsoleView::PressedKeyUp()
-//{
+void ConsoleView::PressedKeyUp()
+{
 //    int temp_x = 0;
 //    getyx(text_win, y, x);
 //    if (m_mymodel->idx - x > 0) {
@@ -148,7 +351,7 @@ void ConsoleView::START()
 //        wrefresh(text_win);
 //    }
 //    else beep();
-//}
+}
 
 void ConsoleView::ClearCmd()
 {

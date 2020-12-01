@@ -4,10 +4,12 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include "curses.h"
+#include <vector>
 #include "MyString.h"
 #include "AdapterLib.h"
-#include "panel.h"
+
+#define LAST_IDX_LINE 1
+#define FIRST_IDX_LINE 0
 
 enum status {
     NORMAL = 0,
@@ -26,43 +28,41 @@ class Observer
 public:
     virtual void UpdateMode(const STD::MyString& mode, status new_status) = 0;
     virtual void UpdateFilename(const STD::MyString& filename) = 0;
-
     virtual void UpdateCmd(const STD::MyString& str) = 0;
 
     virtual void UpdateLineStats(size_t curr_line, size_t lines) = 0;
     virtual void ClearCmd() = 0;
     virtual void EndCmd() = 0;
-    virtual void PrintMessage(const STD::MyString&) = 0;
+    virtual void PrintMessage(const STD::MyString& str) = 0;
     virtual void mvPrintMessage(const char* str, int y, int x) = 0;
-
+    virtual void UpdateVector(const STD::MyString& str) = 0;
     virtual void PressedKeyUp() = 0;
-    virtual void Pressedw() = 0;
 
+    virtual void KeyNavigation(const STD::MyString& str, size_t idx, int command) = 0;
 };
 
 class Observable
 {
 public:
     void AddObserver(Observer* observer);
-    void NotifyUpdateMode(const char* str);
+    void NotifyUpdateMode(const STD::MyString& mode, status new_status);
     void NotifyUpdateLineStats(size_t curr_line, size_t lines);
-    void NotifyUpdateFilename(const char* filename);
-    void NotifyUpdateCmd(const char* str);
-    void NotifyPrintMsg(const char* str);
+    void NotifyUpdateFilename(const STD::MyString& filename);
+    void NotifyUpdateCmd(const STD::MyString& str);
+    void NotifyPrintMsg(const STD::MyString& str);
     void NotifymvPrintMsg(const char* str, int y, int x);
     void NotifyClearCmd();
     void NotifyEndCmd();
+    void NotifyUpdateVector(const STD::MyString& str);
 
-    void GetViewYX(int* y, int* x);
 
     void NotifyMoveCursor(int y, int x);
-    void NotifyScroll(int n);
 
     void NotifyPressedKeyUp();
     void NotifyPressedb();
     void NotifyPressedw();
 
-
+    void SendNavigation(const STD::MyString& str, size_t idx, int command);
 private:
     Observer* m_view_observer = nullptr; 
 };
@@ -96,6 +96,7 @@ public:
     size_t temp_idx = 0; 
     int x = 0;
     int y = 0;
+
     int x_nav = 0;
     int IDX_LAST_LINE = 27;
     int IDX_LAST_COL = 99;
@@ -107,6 +108,8 @@ public:
     void SetStatus(status new_status);
     void SetFilename(const char* new_filename);
     void SetStartConfig();
+
+    void GetKeyFromController(int key);
 
     int GetKeyFromCmd(int key);
     int GetKeyFromNavigation(int key);
@@ -127,8 +130,8 @@ private:
     void m_ProcPressedKeyDown();
     void m_ProcPressedKeyUp();
 
-    void m_GetYX(int* y, int* x);
-    void m_CalcYX();
+    void m_ProcKeyInWaiting(int key);
+    void m_ProcKeyInNavigation(int key);
 
     bool m_CheckScrollDown() const;
     bool m_CheckScrollUp() const;
@@ -161,6 +164,10 @@ public:
     void UpdateCmd(const STD::MyString& str) override;
     void UpdateLineStats(size_t curr_line, size_t lines) override;
     void UpdateFilename(const STD::MyString& filename) override;
+    void UpdateVector(const STD::MyString& str) override;
+
+    void PutModelNewIdx(size_t new_idx);
+    void KeyNavigation(const STD::MyString& str, size_t idx, int command) override;
 
     void ClearCmd() override;
     void EndCmd() override;
@@ -168,7 +175,7 @@ public:
     void mvPrintMessage(const char* str, int y, int x) override;
     void PressedKeyUp() override; 
 
-
+    void TEST_NAVI();
 
     WINDOW* cmd_win = nullptr;
     WINDOW* text_win = nullptr;
@@ -176,6 +183,9 @@ public:
     WINDOW* filename_win = nullptr;
     WINDOW* line_stats_win = nullptr;
     WINDOW* help_win = nullptr;
+
+    WINDOW* curr_win = nullptr;
+
     PANEL* help_pannel = nullptr;
     PANEL* text_pannel = nullptr;
 
@@ -183,26 +193,39 @@ public:
 
 private:
     Controller* m_myController = nullptr; 
-    AdapterPDCurses* m_myAdapter = nullptr; 
+    AdapterPDCurses* m_myAdapter = nullptr;
+    std::vector<std::vector<int>> table;
 
     int MAX_NLINES = 30;
     int MAX_NCOLS = 100;
 
     int TEXT_W_LINES = 28;
+    int LAST_Y = 27;
     int TEXT_W_COLS = 100;
 
-    int y_start_cmd = 0;
-    int x_start_cmd = 0;
+    size_t new_idx = 0;
+
     int y = 0;
     int x = 0;
+    int table_y = 0;
+    int m_TableYFirstLine = 0;
     int new_y = 0;
     int y_nav = 0;
     int x_nav = 0;
+
+    void m_ProcPressedKeyLeft();
+    void m_ProcPressedKeyRight();
+    void m_ProcPressedDollar(const STD::MyString& str, size_t idx); //мб удалить (не используются). 
+    void m_ProcPressedZero();
+    void m_ProcPressedKeyDown(const STD::MyString& str, size_t idx);
+    void m_ProcPressedKeyUp(const STD::MyString& str, size_t idx);
+    void m_ProcPressedKeygg(const STD::MyString& str, size_t idx);
 
     WINDOW* m_create_text_win();
     WINDOW* m_create_cmd_win();
     void m_create_status_wins();
     void m_init_coloros_pair();
+
 };
 
 class Controller
@@ -215,6 +238,15 @@ public:
     ~Controller() {};
     void start();
 
+    void GetKeyFromView(int key);
+    void PutModelNewIdx(size_t idx);
+
+    void TEST() {
+        m_mymodel->OpenFile("test file2.txt");
+        m_mymodel->NotifyPrintMsg(m_mymodel->file_data);
+        m_mymodel->curr_status = NAVIGATION;
+        m_mymodel->NotifyUpdateVector(m_mymodel->file_data);
+    }
 private:
     WindowModel* m_mymodel;
     ConsoleView* m_view; 

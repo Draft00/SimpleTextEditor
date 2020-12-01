@@ -151,11 +151,12 @@ int main()
     fout.close();*/
 
     WindowModel Model;
-    ConsoleView View;
 	AdapterPDCurses Adapter;
+    ConsoleView View;
 	Model.AddObserver(&View); //почему не может?
     Controller Controller(&Model, &View);
 	View.AddController(&Controller);
+	View.START();
     //Controller.start();
     getch();
     return 0;

@@ -27,7 +27,7 @@ public:
 	}
 	WINDOW* A_newwin(int nlines, int ncols, int begy, int begx) {
 		WINDOW* win;
-		newwin(nlines, ncols, begy, begx);
+		win = newwin(nlines, ncols, begy, begx);
 		return win;
 	}
 	void A_wbkgd(WINDOW* win, chtype ch) {
@@ -43,13 +43,22 @@ public:
 		return initscr();	
 	}
 	int A_resize_term(int nlines, int ncols) {
-		return resize_term(nlines, nlines);
+		return resize_term(nlines, ncols);
 	}
 	int A_raw(void) {
 		return raw();
 	}
 	int A_keypad(WINDOW* win, bool bf) {
 		return keypad(win, bf);
+	}
+	int A_noecho(void) {
+		return noecho();
+	}
+	int A_wgetch(WINDOW* win) {
+		return wgetch(win);
+	}
+	int A_wmove(WINDOW* win, int y, int x) {
+		return wmove(win, y, x);
 	}
 };
 #endif // !ADAPTER_LIB

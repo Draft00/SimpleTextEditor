@@ -5,20 +5,12 @@ void Observable::AddObserver(Observer* observer)
     m_view_observer = observer;
 }
 
-void Observable::GetViewYX(int* y, int* x)
+void Observable::NotifyUpdateMode(const STD::MyString& str, status new_status)
 {
-    m_view_observer->PutYX(y, x);
-}
-void Observable::NotifyScroll(int n)
-{
-    m_view_observer->DoScroll(n);
-}
-void Observable::NotifyUpdateMode(const char* str)
-{
-    m_view_observer->UpdateMode(str);
+    m_view_observer->UpdateMode(str, new_status);
 }
 
-void Observable::NotifyUpdateFilename(const char* filename)
+void Observable::NotifyUpdateFilename(const STD::MyString& filename)
 {
     m_view_observer->UpdateFilename(filename);
 }
@@ -27,11 +19,11 @@ void Observable::NotifyUpdateLineStats(size_t curr_line, size_t lines)
     m_view_observer->UpdateLineStats(curr_line, lines);
 }
 
-void Observable::NotifyUpdateCmd(const char* str)
+void Observable::NotifyUpdateCmd(const STD::MyString& str)
 {
     m_view_observer->UpdateCmd(str);
 }
-void Observable::NotifyPrintMsg(const char* str)
+void Observable::NotifyPrintMsg(const STD::MyString& str)
 {
     m_view_observer->PrintMessage(str);
 }
@@ -48,7 +40,14 @@ void Observable::NotifyEndCmd()
 {
     m_view_observer->EndCmd();
 }
-
+void Observable::NotifyUpdateVector(const STD::MyString& str)
+{
+    m_view_observer->UpdateVector(str);
+}
+void Observable::SendNavigation(const STD::MyString& str, size_t idx, int command)
+{
+    m_view_observer->KeyNavigation(str, idx, command);
+}
 void Observable::NotifyPressedKeyUp()
 {
     m_view_observer->PressedKeyUp();
@@ -58,12 +57,8 @@ void Observable::NotifyPressedb()
 {
     //m_view_observer->Pressedb();
 }
-void Observable::NotifyPressedw()
-{
-    m_view_observer->Pressedw();
-}
 
 void Observable::NotifyMoveCursor(int y, int x)
 {
-    m_view_observer->MoveInText(y, x);
+    //m_view_observer->MoveInText(y, x);
 }

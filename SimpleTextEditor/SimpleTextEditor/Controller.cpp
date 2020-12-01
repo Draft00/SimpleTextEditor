@@ -1,5 +1,13 @@
 #include "Header.h"
 
+void Controller::GetKeyFromView(int key)
+{
+    m_mymodel->GetKeyFromController(key);
+}
+void Controller::PutModelNewIdx(size_t new_idx)
+{
+    m_mymodel->idx = new_idx;
+}
 void Controller::start()
 {
     m_mymodel->SetStartConfig();
@@ -9,7 +17,7 @@ void Controller::start()
     int global_num = 1;
 
     m_mymodel->OpenFile("test file.txt");
-    m_mymodel->NotifyPrintMsg(m_mymodel->file_data.c_str());
+    m_mymodel->NotifyPrintMsg(m_mymodel->file_data);
     m_mymodel->curr_status = NAVIGATION;
 
     //ме сдюкърэ 
