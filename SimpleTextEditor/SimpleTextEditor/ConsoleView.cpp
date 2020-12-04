@@ -248,7 +248,7 @@ void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
     PrintLineByLine(str, 0, 0);
     m_myAdapter->A_wrefresh(text_win);
     x_nav = 0; x = 0;
-    UpdateLineStats();
+    //UpdateLineStats();
     m_myAdapter->A_wmove(text_win, y, x);
     m_myAdapter->A_wrefresh(text_win);
     getyx(text_win, y, x);
@@ -264,7 +264,7 @@ void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)
     PrintLineByLine(str, 0, 0);
     m_myAdapter->A_wrefresh(text_win);
     x_nav = 0; x = 0;
-    UpdateLineStats();
+    //UpdateLineStats();
     m_myAdapter->A_wmove(text_win, y, x);
     m_myAdapter->A_wrefresh(text_win);
     getyx(text_win, y, x);
@@ -443,7 +443,9 @@ void ConsoleView::MoveCursorToIdx(const STD::MyString& str, size_t idx)
         m_myAdapter->A_wrefresh(text_win);
     }
     else y = line - m_TableYFirstLine;
+
     UpdateLineStats();
+
     m_myAdapter->A_wmove(text_win, y, new_x);
     m_myAdapter->A_wrefresh(text_win);
     x_nav = new_x;
@@ -600,7 +602,7 @@ void ConsoleView::mvPrintMessage(const char* str, int y, int x)
 
 void ConsoleView::UpdateLineStats()
 {
-    getyx(text_win, y, x);
+    //getyx(text_win, y, x);
     m_myAdapter->A_werase(line_stats_win);
     m_myAdapter->A_printwLines(line_stats_win, "Line: %d/%d", m_TableYFirstLine + y, table.size() - 1);
     m_myAdapter->A_wrefresh(line_stats_win);

@@ -144,7 +144,9 @@ private:
     void m_ProcPreseedd();
     void m_ProcPreseedy();
     void m_ProcPressedp();
-    void m_DeleteLine(size_t first_idz, size_t last_idx);
+    void m_ProcPressedc();
+    void m_DeleteLine(size_t first_idx, size_t last_idx);
+    void m_FindOneWord(size_t* left, size_t* right, size_t temp_idx);
 
     //не использую, проверь
     void m_ProcPressedKeyLeft();

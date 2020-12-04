@@ -369,12 +369,82 @@ int WindowModel::GetKeyFromNavigation(int key)
 		m_ProcPressedp();
 		break;
 	}
+	case 'c': { //”ƒјЋ»“№ —Ћќ¬ј »— Ћё„јя ѕ–ќЅ≈Ћ —ѕ–ј¬ј (\N Ќ≈ “–ќ√ј≈“—я)
+		m_ProcPressedc();
+		break;
+	}
 	default:
 		break;
 	}
 
 	command_NG.clear();
 	return 1;
+}
+void WindowModel::m_FindOneWord(size_t* left, size_t* right, size_t temp_idx)
+{
+	if (file_data[temp_idx] == ' ') {
+		while (file_data[temp_idx - 1] == ' ' && temp_idx - 1 != 0)
+			--temp_idx;
+		*left = temp_idx;
+		temp_idx = idx;
+		while (file_data[temp_idx + 1] == ' ' && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
+			++temp_idx;
+		}
+		*right = temp_idx;
+	}
+	else {
+		while (file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127 && temp_idx - 1 != 0) {
+			--temp_idx;
+		}
+		*left = temp_idx;
+		temp_idx = idx;
+		while (file_data[temp_idx + 1] > ' ' && file_data[temp_idx + 1] < 127 && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
+			++temp_idx;
+		}
+		*right = temp_idx;
+	}
+}
+void WindowModel::m_ProcPressedc()
+{
+	if (file_data[idx] == '\n') return;
+
+	size_t left = 0, right = 0;
+	size_t temp_idx = idx;
+	if (file_data[temp_idx] == ' ') {
+		while (file_data[temp_idx - 1] == ' ' && temp_idx - 1 != 0)
+			--temp_idx;
+		left = temp_idx;
+		temp_idx = idx;
+		while (file_data[temp_idx + 1] == ' ' && temp_idx  + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
+			++temp_idx;
+		}
+		right = temp_idx;
+		size_t len = right - left + 1;
+		file_data.erase(left, len);
+		idx = left; 
+	}
+	else {
+		while (file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127 && temp_idx - 1!= 0) {
+			--temp_idx;
+		}
+		left = temp_idx;
+		temp_idx = idx;
+		while (file_data[temp_idx + 1] > ' ' && file_data[temp_idx + 1] < 127 && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
+			++temp_idx;
+		}
+		right = temp_idx;
+		size_t len = right - left + 1;
+		file_data.erase(left, len);
+		idx = left;
+	}
+
+	size_t len = right - left + 1;
+	file_data.erase(left, len);
+	idx = left;
+	NotifyUpdateVector(file_data);
+	//NotifyUpdateLineStats(); //сомневаюсь, что лини€ будет мен€тьс€, ведь € не могу удалить \n
+	NotifyPrintLineByLine(file_data, 0, 0);
+	NotifyMoveCursorToIdx(file_data, idx);
 }
 void WindowModel::m_ProcPreseedy()
 {
