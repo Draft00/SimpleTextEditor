@@ -4,34 +4,36 @@
 #include "panel.h"
 #include "curses.h"
 
+#define ESC 27
+#define BACKSPACE 8
 class AdapterPDCurses
 {
 public:
 	AdapterPDCurses() {};
 	~AdapterPDCurses() {};
 
-	void A_wrefresh(WINDOW* win) {
-		wrefresh(win);
+	int A_wrefresh(WINDOW* win) {
+		return wrefresh(win);
 	};
-	void A_werase(WINDOW* win) {
-		werase(win);
+	int A_werase(WINDOW* win) {
+		return werase(win);
 	}
-	void A_wprintw(WINDOW* win, const STD::MyString& str) {
-		wprintw(win, str.c_str());
+	int A_wprintw(WINDOW* win, const STD::MyString& str) {
+		return wprintw(win, str.c_str());
 	}
-	void A_wprintw(WINDOW* win, const char* str) {
-		wprintw(win, str);
+	int A_wprintw(WINDOW* win, const char* str) {
+		return wprintw(win, str);
 	}
-	void A_printwLines(WINDOW* win, const char* str, size_t curr_l, size_t all_l) {
-		wprintw(win, str, curr_l, all_l);
+	int A_printwLines(WINDOW* win, const char* str, size_t curr_l, size_t all_l) {
+		return wprintw(win, str, curr_l, all_l);
 	}
 	WINDOW* A_newwin(int nlines, int ncols, int begy, int begx) {
 		WINDOW* win;
 		win = newwin(nlines, ncols, begy, begx);
 		return win;
 	}
-	void A_wbkgd(WINDOW* win, chtype ch) {
-		wbkgd(win, ch);
+	int A_wbkgd(WINDOW* win, chtype ch) {
+		return wbkgd(win, ch);
 	}
 	int A_start_color(void) {
 		return start_color();

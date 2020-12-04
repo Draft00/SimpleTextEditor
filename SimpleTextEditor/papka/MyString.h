@@ -4,6 +4,7 @@
 #include <string> //this is for std::string constructor
 #include <initializer_list> // std::initializer_list
 
+
 namespace STD
 {
 	class MyString
@@ -107,7 +108,8 @@ namespace STD
 
 		//ok. I'll remember that for the future, but still (4?)
 		//ndr3w: the _ (understroke) prefix is not recommend to use for identation of private fields or methods. Main reason - understroke is reserved for internal compiler usage. 
-	private:
+	protected:
+		//private:
 		void _dealloc_cstring(char*& buffer);
 		void _setLength(const size_t len);
 		void _clear_str(const size_t pos);
@@ -128,7 +130,8 @@ namespace STD
 		void _erase(size_t pos, size_t count);
 		void _replace(size_t pos, size_t count, const char* cchar_array);
 
-	private:
+	protected:
+	//private:
 		//ndr3w: str_ prefix is useless and decrease the readability	(+) + align code with tabs	(2?)
 		size_t _length		= 0;				// length
 		size_t _capacity	= 0;				// capacity

@@ -103,8 +103,8 @@ namespace STD
 		MyString& replace(size_t index, size_t count, const char* cchar_array);
 		MyString& replace(size_t index, size_t count, const std::string& std_string);
 
-		MyString substr(size_t index, size_t count); 
-		MyString substr(size_t index);
+		MyString substr(size_t index, size_t count) const; 
+		MyString substr(size_t index) const;
 
 		//ok. I'll remember that for the future, but still (4?)
 		//ndr3w: the _ (understroke) prefix is not recommend to use for identation of private fields or methods. Main reason - understroke is reserved for internal compiler usage. 

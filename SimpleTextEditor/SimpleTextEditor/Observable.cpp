@@ -14,9 +14,9 @@ void Observable::NotifyUpdateFilename(const STD::MyString& filename)
 {
     m_view_observer->UpdateFilename(filename);
 }
-void Observable::NotifyUpdateLineStats(size_t curr_line, size_t lines)
+void Observable::NotifyUpdateLineStats()
 {
-    m_view_observer->UpdateLineStats(curr_line, lines);
+    m_view_observer->UpdateLineStats();
 }
 
 void Observable::NotifyUpdateCmd(const STD::MyString& str)
@@ -26,6 +26,22 @@ void Observable::NotifyUpdateCmd(const STD::MyString& str)
 void Observable::NotifyPrintMsg(const STD::MyString& str)
 {
     m_view_observer->PrintMessage(str);
+}
+void Observable::NotifyPrintLineByLine(const STD::MyString& str, int y_start, int x_start)
+{
+    m_view_observer->PrintLineByLine(str, y_start, x_start);
+}
+void Observable::NotifyPrintLineByLineXY(const STD::MyString& str, int y_start, int x_start, int offset)
+{
+    m_view_observer->PrintLineByLineXY(str, y_start, x_start, offset);
+}
+void Observable::NotifyJumpTo(const STD::MyString& str, size_t idx, const STD::MyString& line)
+{
+    m_view_observer->JumpTo(str, idx, line);
+}
+void Observable::NotifyGetLastFirstIdx()
+{
+    m_view_observer->PutLastFirstIdx();
 }
 void Observable::NotifymvPrintMsg(const char* str, int y, int x)
 {
@@ -51,6 +67,10 @@ void Observable::SendNavigation(const STD::MyString& str, size_t idx, int comman
 void Observable::NotifyPressedKeyUp()
 {
     m_view_observer->PressedKeyUp();
+}
+void Observable::NotifyMoveCursorToIdx(const STD::MyString& str, size_t idx)
+{
+    m_view_observer->MoveCursorToIdx(str, idx);
 }
 
 void Observable::NotifyPressedb()

@@ -152,9 +152,13 @@ int main()
 
     WindowModel Model;
 	AdapterPDCurses Adapter;
-    ConsoleView View;
+
+	//раньше View ничего не принимал
+	//подождите минутку. я нигде не присваиваю View указатель Adapter, так почему это вообще работает??
+
+    ConsoleView View(&Adapter);
 	Model.AddObserver(&View); //почему не может?
-    Controller Controller(&Model, &View);
+    Controller Controller(&Model);
 	View.AddController(&Controller);
 	View.START();
     //Controller.start();
