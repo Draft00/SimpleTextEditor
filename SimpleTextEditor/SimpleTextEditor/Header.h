@@ -29,7 +29,7 @@ public:
     virtual void UpdateMode(const STD::MyString& mode, status new_status) = 0;
     virtual void UpdateFilename(const STD::MyString& filename) = 0;
     virtual void UpdateCmd(const STD::MyString& str) = 0;
-
+    virtual void UpdateSearch(const STD::MyString& str) = 0;
     virtual void UpdateLineStats() = 0;
     virtual void ClearCmd() = 0;
     virtual void EndCmd() = 0;
@@ -43,6 +43,8 @@ public:
     virtual void PutLastFirstIdx() = 0;
     virtual void KeyNavigation(const STD::MyString& str, size_t idx, int command) = 0;
     virtual void JumpTo(const STD::MyString& str, size_t idx, const STD::MyString& line) = 0;
+    virtual void NewText() = 0;
+    virtual void SetIdxForMove(const STD::MyString& str, size_t idx_move) = 0;
 };
 
 class Observable
@@ -52,6 +54,7 @@ public:
     void NotifyUpdateMode(const STD::MyString& mode, status new_status);
     void NotifyUpdateFilename(const STD::MyString& filename);
     void NotifyUpdateCmd(const STD::MyString& str);
+    void NotifyUpdateSearch(const STD::MyString& str);
     void NotifyUpdateLineStats();
     void NotifyPrintMsg(const STD::MyString& str);
     void NotifymvPrintMsg(const char* str, int y, int x);
@@ -63,6 +66,8 @@ public:
     void NotifyMoveCursorToIdx(const STD::MyString& str, size_t idx);
     void NotifyGetLastFirstIdx();
     void NotifyJumpTo(const STD::MyString& str, size_t idx, const STD::MyString& line);
+    void NotifyNewText(); //TODO
+    void NotifyIdxForMove(const STD::MyString& str, size_t idx);
 
 
     void NotifyMoveCursor(int y, int x);
@@ -99,12 +104,15 @@ public:
     int MAX_NCOLS = 100;
 
     STD::MyString str;
+    STD::MyString search_str; 
+    STD::MyString memory_search_str;
     STD::MyString file_data;
 
     size_t idx_first_line = 0;
     size_t idx_last_line = 0;
     size_t idx = 0;
-    size_t temp_idx = 0; 
+    int direction_search = 1;
+    //size_t temp_idx = 0; 
     int x = 0;
     int y = 0;
 
@@ -127,11 +135,11 @@ public:
     int GetKeyFromCmd(int key);
     int GetKeyFromNavigation(int key);
     int GetKeyFromNormal(int key);
+    int GetKeyFromSearch(int key);
 
     int ParseCommand();
 
     void OpenFile(STD::MyString s_filename);
-    void SaveFile();
     void SaveFile(STD::MyString s_filename);
 
     void ProcPressedw();
@@ -145,8 +153,10 @@ private:
     void m_ProcPreseedy();
     void m_ProcPressedp();
     void m_ProcPressedc();
+    void m_ProcPressedv();
     void m_DeleteLine(size_t first_idx, size_t last_idx);
     void m_FindOneWord(size_t* left, size_t* right, size_t temp_idx);
+    void m_ProcPressedSerchEnd(size_t idx, STD::MyString search_str);
 
     //не использую, проверь
     void m_ProcPressedKeyLeft();
@@ -187,11 +197,14 @@ public:
 
     void UpdateMode(const STD::MyString& mode, status new_status) override;
     void UpdateCmd(const STD::MyString& str) override;
+    void UpdateSearch(const STD::MyString& str) override;
     void UpdateLineStats() override;
     void UpdateFilename(const STD::MyString& filename) override;
     void UpdateVector(const STD::MyString& str) override;
+    void SetIdxForMove(const STD::MyString& str, size_t idx_move) override;
 
     void PutModelNewIdx(size_t new_idx);
+    void GetIdxForMove();
     void KeyNavigation(const STD::MyString& str, size_t idx, int command) override;
     void MoveCursorToIdx(const STD::MyString& str, size_t idx) override;
 
@@ -205,6 +218,7 @@ public:
     void PrintLineByLineXY(const STD::MyString& str, int y_start, int x_start, int offset) override;
     void JumpTo(const STD::MyString& str, size_t idx, const STD::MyString& line) override;
     void PutLastFirstIdx() override;
+    void NewText() override;
 
     void TEST_NAVI();
 
@@ -236,13 +250,13 @@ private:
     int TEXT_W_COLS = 100;
 
     size_t new_idx = 0;
+    size_t idx_for_move = 0;
 
     int y = 0;
     int x = 0;
     int table_y = 0;
     int m_TableYFirstLine = 0;
     int new_y = 0;
-    int y_nav = 0;
     int x_nav = 0;
 
     void m_ProcPressedKeyLeft();
@@ -255,7 +269,6 @@ private:
     void m_ProcPressedG(const STD::MyString& str, size_t idx);
     void m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx);
     void m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx);
-    bool m_ParseCommand(int key);
     void m_ScrollForNewLine(const STD::MyString& str, size_t idx, size_t line);
 
     WINDOW* m_create_text_win();
@@ -277,6 +290,7 @@ public:
     void GetKeyFromView(int key);
     void PutModelNewIdx(size_t idx);
     void PutModelFirstLastIdx(size_t first_idx, size_t last_idx);
+    void GetIdxForMove();
 
     void TEST() {
         m_mymodel->OpenFile("test file2.txt");

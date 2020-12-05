@@ -8,6 +8,10 @@ void Controller::PutModelNewIdx(size_t new_idx)
 {
     m_mymodel->idx = new_idx;
 }
+void Controller::GetIdxForMove()
+{
+    m_mymodel->NotifyIdxForMove(m_mymodel->file_data, m_mymodel->idx);
+}
 void Controller::PutModelFirstLastIdx(size_t first_idx, size_t last_idx)
 {
     m_mymodel->FirstIdxCopyDel = first_idx;

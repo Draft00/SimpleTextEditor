@@ -70,9 +70,71 @@ void WindowModel::GetKeyFromController(int key)
 		GetKeyFromNormal(key);
 		break;
 	}
+	case SEARCH:
+	{
+		GetKeyFromSearch(key);
+		break;
+	}
 	default:
 		break;
 	}
+}
+int WindowModel::GetKeyFromSearch(int key)
+{
+	if (key == KEY_UP) {
+		if (memory_search_str.empty()) return 1;
+
+		if (memory_search_str[0] == '/' && idx != file_data.length() - 1) {
+			STD::MyString str = memory_search_str.substr(1);
+			m_ProcPressedSerchEnd(idx + 1, str);
+		}
+
+		else if (memory_search_str[0] == '?' && idx != file_data.length() - 1) {
+			STD::MyString str = memory_search_str.substr(1);
+			//TODO
+		}
+
+		return 1;
+	}
+	else if (key == KEY_DOWN) {
+		if (memory_search_str.empty()) return 1;
+		//TODO
+		return 1;
+	}
+	else if (key == '\r') {
+		if (search_str.empty() || search_str.length() == 1) return 1;
+
+		memory_search_str = search_str;
+		STD::MyString str = memory_search_str.substr(1);
+		if (search_str[0] == '/') {
+			m_ProcPressedSerchEnd(idx, str);
+		}
+		else if (search_str[0] == '?') {
+			//TODO
+		}
+		search_str.clear();
+		NotifyUpdateSearch(search_str);
+		return 1;
+	}
+	else if (key == BACKSPACE) {
+		if (search_str.length() > 1) {
+			search_str.erase(search_str.length() - 1, 1);
+		}
+		NotifyUpdateSearch(search_str);
+		return 1;
+	}
+	else if (key == ESC) {
+		search_str.clear();
+		memory_search_str.clear();
+		NotifyUpdateSearch(search_str);
+		curr_status = NAVIGATION;
+		NotifyUpdateMode(mode_str[NAVIGATION], NAVIGATION);
+		return 1;
+	}
+
+	search_str.append(1, key);
+	NotifyUpdateSearch(search_str);
+	return 1;
 }
 int WindowModel::GetKeyFromNormal(int key)
 {
@@ -93,10 +155,11 @@ int WindowModel::GetKeyFromNormal(int key)
 		command_NG.clear();
 		curr_status = NAVIGATION;
 		NotifyUpdateMode(mode_str[NAVIGATION], NAVIGATION);
-		NotifyMoveCursorToIdx(file_data, idx);
+		//NotifyMoveCursorToIdx(file_data, idx); //не нужно, так как каждый раз при переходе в режим требую.
 	}
 	else if (key == BACKSPACE) {
-		if (idx != 0) { //по идее последнюю \n ну никак не удалишь так что else и не нужен
+		if (idx != 0 && idx != file_data.length() - 1) { //по идее последнюю \n ну никак не удалишь так что else и не нужен/
+			//еще заблокировала возможность удалить предпоследнюю \n.
 			file_data.erase(idx - 1, 1);
 			idx--;
 			NotifyUpdateVector(file_data);
@@ -127,7 +190,7 @@ int WindowModel::GetKeyFromCmd(int key)
 {
 	switch (key)
 	{
-	case 8:
+	case BACKSPACE:
 	{
 		if (!str.empty()) {
 			str.erase(str.length() - 1, 1);
@@ -144,11 +207,11 @@ int WindowModel::GetKeyFromCmd(int key)
 		if (command == STOP) {
 			curr_status = EXIT;
 			NotifyUpdateMode("...", EXIT);
-			//return -1;
+			NotifyMoveCursorToIdx(file_data, idx); //TEST IT!!!
 		}
 		break;
 	}
-	case 27: //ESC
+	case ESC:
 	{
 		str.clear();
 		NotifyEndCmd();
@@ -179,11 +242,11 @@ int WindowModel::ParseCommand()
 			return STOP;
 		}
 		else if (str == "x") {
-			SaveFile();
+			SaveFile(filename);
 			return STOP;
 		}
 		else if (str == "w") {
-			SaveFile();
+			SaveFile(filename);
 		}
 		else if (str[0] == 'w') {
 			STD::MyString filename_save;
@@ -194,18 +257,20 @@ int WindowModel::ParseCommand()
 			STD::MyString filename;
 			filename = str.substr(2);
 			OpenFile(filename);
-			NotifyPrintMsg(file_data.c_str());
+			NotifyUpdateVector(file_data);
+			NotifyUpdateLineStats();
+			NotifyPrintLineByLine(file_data, 0, 0);
 			NotifyClearCmd(); //to return cursor in CMD
 		}
 		else if (str == "wq!") {
-			SaveFile();
+			SaveFile(filename);
 			return STOP;
 		}
 		else if (str == "h") {
 
 		}
 		else { //TODO TEST IT!!!
-			for (int i = 0; i < str.length(); i++) {
+			for (size_t i = 0; i < str.length(); i++) {
 				if (str[i] <= '0' || str[i] >= '9') {
 					return 1;
 				}
@@ -214,17 +279,6 @@ int WindowModel::ParseCommand()
 		}
 	}
 	return 1;
-}
-void WindowModel::SaveFile()
-{
-	std::ofstream fout;
-	fout.open(filename.c_str(), std::ios_base::out);
-	if (!fout.is_open()) {
-		beep();
-		return;
-	}
-	fout << file_data;
-	fout.close();
 }
 void WindowModel::SaveFile(STD::MyString s_filename)
 {
@@ -240,11 +294,13 @@ void WindowModel::SaveFile(STD::MyString s_filename)
 
 void WindowModel::OpenFile(STD::MyString s_filename)
 {
+	file_data.clear();idx = 0; x_nav = 0; command_NG.clear(); copy_str.clear(); flag_changes = false;
+	LastIdxCopyDel = 0; FirstIdxCopyDel = 0;
 	char c;
 	std::ifstream fin;
 	fin.open(s_filename.c_str(), std::ios_base::in);
 	if (!fin.is_open()) {
-		beep(); //TODO RETURN MESSAGE
+		beep();
 		return;
 	}
 	/*do {
@@ -258,8 +314,6 @@ void WindowModel::OpenFile(STD::MyString s_filename)
 	fin.close();
 	filename = s_filename;
 	NotifyUpdateFilename(s_filename);
-	//CountLines();
-	//NotifyUpdateLineStats(num_curr_line, num_lines);
 }
 
 int WindowModel::GetKeyFromNavigation(int key)
@@ -360,7 +414,7 @@ int WindowModel::GetKeyFromNavigation(int key)
 		m_ProcPreseedd();
 		break;
 	}
-	case 'y': {
+	case 'y': { //копировать строку
 		NotifyGetLastFirstIdx();
 		m_ProcPreseedy();
 		break;
@@ -373,6 +427,25 @@ int WindowModel::GetKeyFromNavigation(int key)
 		m_ProcPressedc();
 		break;
 	}
+	case 'v': { //копировать слово под курсором. видимо те же пробелы и все такое, \n не трогать
+		m_ProcPressedv();
+		break;
+	}
+	case '/':
+	{
+		curr_status = SEARCH;
+		NotifyUpdateMode(mode_str[SEARCH], SEARCH);
+		search_str.append(1, key);
+		NotifyUpdateSearch(search_str);
+		break;
+	}
+	case '?':
+	{
+		curr_status = SEARCH;
+		NotifyUpdateMode(mode_str[SEARCH], SEARCH);
+		search_str.append(1, key);
+		NotifyUpdateSearch(search_str);
+	}
 	default:
 		break;
 	}
@@ -380,11 +453,20 @@ int WindowModel::GetKeyFromNavigation(int key)
 	command_NG.clear();
 	return 1;
 }
+void WindowModel::m_ProcPressedSerchEnd(size_t new_idx, STD::MyString search_str)
+{
+	size_t find_idx = file_data.find(search_str.c_str(), new_idx);
+
+	if (find_idx == STD::MyString::npos) return;
+	idx = find_idx;
+	NotifyMoveCursorToIdx(file_data, idx);
+}
 void WindowModel::m_FindOneWord(size_t* left, size_t* right, size_t temp_idx)
 {
 	if (file_data[temp_idx] == ' ') {
 		while (file_data[temp_idx - 1] == ' ' && temp_idx - 1 != 0)
 			--temp_idx;
+		if (temp_idx == 1 && file_data[temp_idx] == ' ') temp_idx = 0;
 		*left = temp_idx;
 		temp_idx = idx;
 		while (file_data[temp_idx + 1] == ' ' && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
@@ -396,6 +478,7 @@ void WindowModel::m_FindOneWord(size_t* left, size_t* right, size_t temp_idx)
 		while (file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127 && temp_idx - 1 != 0) {
 			--temp_idx;
 		}
+		if (temp_idx == 1 && file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127) temp_idx = 0;
 		*left = temp_idx;
 		temp_idx = idx;
 		while (file_data[temp_idx + 1] > ' ' && file_data[temp_idx + 1] < 127 && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
@@ -409,34 +492,7 @@ void WindowModel::m_ProcPressedc()
 	if (file_data[idx] == '\n') return;
 
 	size_t left = 0, right = 0;
-	size_t temp_idx = idx;
-	if (file_data[temp_idx] == ' ') {
-		while (file_data[temp_idx - 1] == ' ' && temp_idx - 1 != 0)
-			--temp_idx;
-		left = temp_idx;
-		temp_idx = idx;
-		while (file_data[temp_idx + 1] == ' ' && temp_idx  + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
-			++temp_idx;
-		}
-		right = temp_idx;
-		size_t len = right - left + 1;
-		file_data.erase(left, len);
-		idx = left; 
-	}
-	else {
-		while (file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127 && temp_idx - 1!= 0) {
-			--temp_idx;
-		}
-		left = temp_idx;
-		temp_idx = idx;
-		while (file_data[temp_idx + 1] > ' ' && file_data[temp_idx + 1] < 127 && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получитс€ удалить \n
-			++temp_idx;
-		}
-		right = temp_idx;
-		size_t len = right - left + 1;
-		file_data.erase(left, len);
-		idx = left;
-	}
+	m_FindOneWord(&left, &right, idx);
 
 	size_t len = right - left + 1;
 	file_data.erase(left, len);
@@ -446,36 +502,50 @@ void WindowModel::m_ProcPressedc()
 	NotifyPrintLineByLine(file_data, 0, 0);
 	NotifyMoveCursorToIdx(file_data, idx);
 }
+void WindowModel::m_ProcPressedv()
+{
+	if (file_data[idx] == '\n') return;
+	size_t left = 0, right = 0;
+	m_FindOneWord(&left, &right, idx);
+	size_t len = right - left + 1;
+	copy_str = file_data.substr(left, len);
+}
+
 void WindowModel::m_ProcPreseedy()
 {
 	copy_str.clear();
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
 	copy_str = file_data.substr(FirstIdxCopyDel, len);
+	FirstIdxCopyDel = 0; LastIdxCopyDel = 0;
 }
 void WindowModel::m_ProcPressedp()
 {
 	if (copy_str.empty()) return;
-	if (idx == file_data.length() - 1) return; //€ запрещаю вставл€ть после последней \n
+	if (file_data[idx] == '\n') return;  //€ запрещаю вставл€ть после \n
+
 	file_data.insert(idx + 1, copy_str.c_str()); //ѕ–ќ“≈—“»“№ ћќ∆Ќќ Ћ» ¬—“ј¬»“№ ѕќ—Ћ≈ ѕќ—Ћ≈ƒЌ≈… \n
 	idx += copy_str.length();
 	NotifyUpdateVector(file_data);
 	NotifyUpdateLineStats();
 	NotifyPrintLineByLine(file_data, 0, 0);
 	NotifyMoveCursorToIdx(file_data, idx);
-	FirstIdxCopyDel = 0; LastIdxCopyDel = 0;
 }
 
 void WindowModel::m_ProcPreseedd()
 {
 	copy_str.clear();
-	if (file_data.size() == 1 && file_data[0] == '\n') return; //последнюю \n нельз€ удал€ть.
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
+	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return; //нельз€ вырезать единствнную \n
+
 	copy_str = file_data.substr(FirstIdxCopyDel, len);
 	m_DeleteLine(0, 0); //0 0 потому что пока что € нигде не использую аргументы этой команды. ћЅ ”ƒјЋ»“№ »« ј–√”ћ≈Ќ“ќ¬ »Ћ» ѕ≈–≈ƒј¬ј“№ ѕќЋя Ё“»
 }
 void WindowModel::m_DeleteLine(size_t first_idx, size_t last_idx)
 {
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
+
+	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return; //нельз€ удалить одну \n.
+
 	file_data.erase(FirstIdxCopyDel, len);
 	idx = FirstIdxCopyDel;
 	NotifyUpdateVector(file_data);
@@ -487,10 +557,13 @@ void WindowModel::m_DeleteLine(size_t first_idx, size_t last_idx)
 
 void WindowModel::m_ProcPreseedS()
 {
-	if (file_data.size() == 1 && file_data[0] == '\n') return; //последнюю \n нельз€ удал€ть.
+	//if (file_data.size() == 1 && file_data[0] == '\n') return; заменено: нельз€ удал€ть вообще \n. 
 
 	//ѕќ—ћќ“–» ѕќ«ћќ∆Ќќ «јћ≈Ќ»“№ Ќј m_DeleteLine
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
+
+	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return;
+
 	file_data.erase(FirstIdxCopyDel, len);
 	idx = FirstIdxCopyDel;
 	NotifyUpdateVector(file_data);
@@ -502,14 +575,15 @@ void WindowModel::m_ProcPreseedS()
 
 void WindowModel::m_ProcPressedx()
 {
-	if (file_data.size() == 1 && file_data[0] == '\n') return;
-	if (idx + 1 != file_data.size()) {
-		file_data.erase(idx + 1, 1);
-		NotifyUpdateVector(file_data);
-		NotifyUpdateLineStats();
-		NotifyPrintLineByLine(file_data, 0, 0);
-		NotifyMoveCursorToIdx(file_data, idx); //можно заменить такое трудоемкое дейсвтие MOVEXY и сказать остатьс€ на месте
-	}
+	//if (file_data.size() == 1 || idx + 1 == file_data.size()) return;
+	if (idx == file_data.size() - 1 || idx + 1 == file_data.size() - 1) return;
+	//if (idx + 1 == '\n') return;
+
+	file_data.erase(idx + 1, 1);
+	NotifyUpdateVector(file_data);
+	NotifyUpdateLineStats();
+	NotifyPrintLineByLine(file_data, 0, 0);
+	NotifyMoveCursorToIdx(file_data, idx); //можно заменить такое трудоемкое дейсвтие MOVEXY и сказать остатьс€ на месте
 }
 void WindowModel::m_ProcPressedi()
 {

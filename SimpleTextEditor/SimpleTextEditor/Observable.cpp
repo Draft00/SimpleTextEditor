@@ -23,6 +23,10 @@ void Observable::NotifyUpdateCmd(const STD::MyString& str)
 {
     m_view_observer->UpdateCmd(str);
 }
+void Observable::NotifyUpdateSearch(const STD::MyString& str)
+{
+    m_view_observer->UpdateSearch(str);
+}
 void Observable::NotifyPrintMsg(const STD::MyString& str)
 {
     m_view_observer->PrintMessage(str);
@@ -72,7 +76,10 @@ void Observable::NotifyMoveCursorToIdx(const STD::MyString& str, size_t idx)
 {
     m_view_observer->MoveCursorToIdx(str, idx);
 }
-
+void Observable::NotifyIdxForMove(const STD::MyString& str, size_t idx)
+{
+    m_view_observer->SetIdxForMove(str, idx);
+}
 void Observable::NotifyPressedb()
 {
     //m_view_observer->Pressedb();

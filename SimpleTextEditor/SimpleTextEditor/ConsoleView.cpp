@@ -31,10 +31,13 @@ void ConsoleView::AddController(Controller* Controller)
 {
     m_myController = Controller;
 }
-/*void ConsoleView::AddAdapter(AdapterPDCurses* Adapter)
+void ConsoleView::NewText()
 {
-    m_myAdapter = Adapter;
-}*/
+    new_idx = 0;  y = 0; x = 0;
+    table_y = 0; m_TableYFirstLine = 0;
+    new_y = 0; x_nav = 0;
+    table.clear();
+}
 
 
 ConsoleView::~ConsoleView()
@@ -119,6 +122,14 @@ void ConsoleView::TEST_NAVI()
     curr_status = NAVIGATION;
     m_myController->TEST();
 }
+void ConsoleView::GetIdxForMove()
+{
+    m_myController->GetIdxForMove();
+}
+void ConsoleView::SetIdxForMove(const STD::MyString& str, size_t new_idx_move)
+{
+    MoveCursorToIdx(str, new_idx_move);
+}
 
 void ConsoleView::START()
 {
@@ -152,7 +163,8 @@ void ConsoleView::START()
         }
         if (curr_status == NAVIGATION) {
             m_myAdapter->A_keypad(text_win, true);
-            m_myAdapter->A_wmove(text_win, 0, 0);
+            GetIdxForMove();
+            //m_myAdapter->A_wmove(text_win, 0, 0);
             m_myAdapter->A_wrefresh(text_win);
             while (curr_status == NAVIGATION) {
                 choice = m_myAdapter->A_wgetch(text_win);
@@ -161,8 +173,18 @@ void ConsoleView::START()
         }
         if (curr_status == NORMAL) {
             m_myAdapter->A_keypad(text_win, true);
+            GetIdxForMove();
             while (curr_status == NORMAL) {
                 choice = m_myAdapter->A_wgetch(text_win);
+                m_myController->GetKeyFromView(choice);
+            }
+        }
+        if (curr_status == SEARCH) {
+            m_myAdapter->A_keypad(cmd_win, true);
+            m_myAdapter->A_wmove(cmd_win, 0, 1);
+            m_myAdapter->A_wrefresh(cmd_win);
+            while (curr_status == SEARCH) {
+                choice = m_myAdapter->A_wgetch(cmd_win);
                 m_myController->GetKeyFromView(choice);
             }
         }
@@ -612,6 +634,12 @@ void ConsoleView::UpdateCmd(const STD::MyString& str)
 {
     m_myAdapter->A_werase(cmd_win);
     m_myAdapter->A_wprintw(cmd_win, ":");
+    m_myAdapter->A_wprintw(cmd_win, str);
+    m_myAdapter->A_wrefresh(cmd_win);
+}
+void ConsoleView::UpdateSearch(const STD::MyString& str)
+{
+    m_myAdapter->A_werase(cmd_win);
     m_myAdapter->A_wprintw(cmd_win, str);
     m_myAdapter->A_wrefresh(cmd_win);
 }
