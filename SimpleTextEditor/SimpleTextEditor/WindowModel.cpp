@@ -1,22 +1,11 @@
 #include "Header.h"
 
-WindowModel::WindowModel()
-{
+WindowModel::WindowModel() {
 
 }
 
-WindowModel::~WindowModel()
-{
-}
+WindowModel::~WindowModel() {
 
-
-void WindowModel::SetStartConfig()
-{
-	/*NotifyUpdateMode(mode_str[curr_status].c_str());
-	NotifyUpdateFilename(filename.c_str());
-	NotifyUpdateLineStats(num_curr_line, num_lines);
-	char hello_message[] = "Use :h for help\nUse :o filename to open file";
-	NotifyPrintMsg(hello_message);*/
 }
 
 void WindowModel::SetStatus(status new_status)
@@ -75,45 +64,32 @@ void WindowModel::GetKeyFromController(int key)
 		GetKeyFromSearch(key);
 		break;
 	}
+	case HELP:
+	{
+		GetKeyFromHelp(key);
+		break;
+	}
 	default:
 		break;
 	}
 }
+
 int WindowModel::GetKeyFromSearch(int key)
 {
-	if (key == KEY_UP) {
-		if (memory_search_str.empty()) return 1;
-
-		if (memory_search_str[0] == '/' && idx != file_data.length() - 1) {
-			STD::MyString str = memory_search_str.substr(1);
-			m_ProcPressedSerchEnd(idx + 1, str);
-		}
-
-		else if (memory_search_str[0] == '?' && idx != file_data.length() - 1) {
-			STD::MyString str = memory_search_str.substr(1);
-			//TODO
-		}
-
-		return 1;
-	}
-	else if (key == KEY_DOWN) {
-		if (memory_search_str.empty()) return 1;
-		//TODO
-		return 1;
-	}
-	else if (key == '\r') {
+	if (key == '\r') {
 		if (search_str.empty() || search_str.length() == 1) return 1;
 
 		memory_search_str = search_str;
 		STD::MyString str = memory_search_str.substr(1);
 		if (search_str[0] == '/') {
-			m_ProcPressedSerchEnd(idx, str);
+			m_ProcPressedSearchEnd(idx, str);
 		}
 		else if (search_str[0] == '?') {
-			//TODO
+			m_ProcPressedSearchBegin(idx, str);
 		}
 		search_str.clear();
 		NotifyUpdateSearch(search_str);
+		SetStatus(NAVIGATION);
 		return 1;
 	}
 	else if (key == BACKSPACE) {
@@ -125,15 +101,35 @@ int WindowModel::GetKeyFromSearch(int key)
 	}
 	else if (key == ESC) {
 		search_str.clear();
-		memory_search_str.clear();
 		NotifyUpdateSearch(search_str);
-		curr_status = NAVIGATION;
-		NotifyUpdateMode(mode_str[NAVIGATION], NAVIGATION);
+		SetStatus(NAVIGATION);
 		return 1;
 	}
 
 	search_str.append(1, key);
 	NotifyUpdateSearch(search_str);
+	return 1;
+}
+int WindowModel::GetKeyFromHelp(int key)
+{
+	switch (key)
+	{
+	case ESC:
+	{
+		if (!file_data.empty()) {
+			SetStatus(NAVIGATION);
+			NotifyUpdateVector(file_data);
+			NotifyPrintLineByLine(file_data, 0, 0);
+		}
+		else {
+			SetStatus(WAITING);
+			NotifyPrintMsg("Use :h for help\nUse :o filename to open file");
+		}
+		//NotifyMoveCursorToIdx(file_data, idx);
+	}
+	default:
+		break;
+	}
 	return 1;
 }
 int WindowModel::GetKeyFromNormal(int key)
@@ -153,8 +149,11 @@ int WindowModel::GetKeyFromNormal(int key)
 	else if (key == ESC) {
 		//TODO выхож из режима и в навигацию ВРОДЕ ТАК НО НАДО ТЕСТИТЬ ЕЩЕ
 		command_NG.clear();
-		curr_status = NAVIGATION;
-		NotifyUpdateMode(mode_str[NAVIGATION], NAVIGATION);
+		SetStatus(NAVIGATION);
+
+		//curr_status = NAVIGATION;
+		//NotifyUpdateMode(mode_str[NAVIGATION], NAVIGATION); //заменила на SetStatus
+
 		//NotifyMoveCursorToIdx(file_data, idx); //не нужно, так как каждый раз при переходе в режим требую.
 	}
 	else if (key == BACKSPACE) {
@@ -164,7 +163,9 @@ int WindowModel::GetKeyFromNormal(int key)
 			idx--;
 			NotifyUpdateVector(file_data);
 			NotifyUpdateLineStats();
-			NotifyPrintLineByLineXY(file_data, 0, 0, -1);
+			NotifyPrintLineByLine(file_data, 0, 0);
+			NotifyMoveCursorToIdx(file_data, idx);
+			//NotifyPrintLineByLineXY(file_data, 0, 0, -1);
 		}
 		else {
 			//file_data.erase(idx, 1);
@@ -172,7 +173,7 @@ int WindowModel::GetKeyFromNormal(int key)
 			//NotifyPrintLineByLineX(file_data, 0, 0, -1);
 		}
 	}
-	else if ((key >= 32 && key <= 126) || key == '\r'){
+	else if (m_IsLetterASCII(key) || key == ' ' || key == '\r'){
 		int n_flag = 1; 
 		if (key == '\r') {
 			key = '\n';
@@ -188,41 +189,29 @@ int WindowModel::GetKeyFromNormal(int key)
 }
 int WindowModel::GetKeyFromCmd(int key)
 {
-	switch (key)
-	{
-	case BACKSPACE:
-	{
+	if (key == BACKSPACE) {
 		if (!str.empty()) {
 			str.erase(str.length() - 1, 1);
+			NotifyUpdateCmd(str);
 		}
-		NotifyUpdateCmd(str);
-		break;
 	}
-	case 13:
-	{
+	else if (key == '\r') {
 		NotifyClearCmd();
 		int command = -1;
 		command = ParseCommand();
 		str.clear();
 		if (command == STOP) {
-			curr_status = EXIT;
-			NotifyUpdateMode("...", EXIT);
-			NotifyMoveCursorToIdx(file_data, idx); //TEST IT!!!
+			SetStatus(EXIT);
 		}
-		break;
 	}
-	case ESC:
-	{
+	else if (key == ESC) {
 		str.clear();
 		NotifyEndCmd();
 		SetStatus(NAVIGATION);
-		return 0;
-		break;
 	}
-	default:
+	else if (m_IsLetterASCII(key) || key == ' ') {
 		str.append(1, key);
 		NotifyUpdateCmd(str);
-		break;
 	}
 	return 1;
 }
@@ -257,24 +246,32 @@ int WindowModel::ParseCommand()
 			STD::MyString filename;
 			filename = str.substr(2);
 			OpenFile(filename);
+			NotifyEndCmd();
 			NotifyUpdateVector(file_data);
 			NotifyUpdateLineStats();
 			NotifyPrintLineByLine(file_data, 0, 0);
-			NotifyClearCmd(); //to return cursor in CMD
+			//NotifyClearCmd(); //to return cursor in CMD
+			SetStatus(NAVIGATION);
 		}
 		else if (str == "wq!") {
 			SaveFile(filename);
 			return STOP;
 		}
 		else if (str == "h") {
-
+			OpenHelp();
+			SetStatus(HELP);
+			NotifyEndCmd();
+			NotifyUpdateVector(help_str);
+			NotifyPrintLineByLine(help_str, 0, 0);
 		}
-		else { //TODO TEST IT!!!
+		else {
 			for (size_t i = 0; i < str.length(); i++) {
-				if (str[i] <= '0' || str[i] >= '9') {
+				if (str[i] < '0' || str[i] > '9') {
 					return 1;
 				}
 			}
+			NotifyEndCmd();
+			SetStatus(NAVIGATION);
 			NotifyJumpTo(file_data, idx, str);
 		}
 	}
@@ -294,7 +291,7 @@ void WindowModel::SaveFile(STD::MyString s_filename)
 
 void WindowModel::OpenFile(STD::MyString s_filename)
 {
-	file_data.clear();idx = 0; x_nav = 0; command_NG.clear(); copy_str.clear(); flag_changes = false;
+	file_data.clear();idx = 0; command_NG.clear(); copy_str.clear(); flag_changes = false;
 	LastIdxCopyDel = 0; FirstIdxCopyDel = 0;
 	char c;
 	std::ifstream fin;
@@ -314,6 +311,23 @@ void WindowModel::OpenFile(STD::MyString s_filename)
 	fin.close();
 	filename = s_filename;
 	NotifyUpdateFilename(s_filename);
+}
+
+void WindowModel::OpenHelp()
+{
+	help_str.clear();
+	char c;
+	std::ifstream fin;
+	fin.open("help.txt", std::ios_base::in);
+	if (!fin.is_open()) {
+		beep();
+		return;
+	}
+	while (!fin.eof()) {
+		fin.get(c);
+		help_str.append(1, c);
+	}
+	fin.close();
 }
 
 int WindowModel::GetKeyFromNavigation(int key)
@@ -364,14 +378,58 @@ int WindowModel::GetKeyFromNavigation(int key)
 	}
 	case 'b':
 	{
-		NotifyPressedb();
+		m_ProcPressedb();
+		NotifyMoveCursorToIdx(file_data, idx);
 		break;
 	}
 	case 'w': {
-		ProcPressedw();
+		m_ProcPressedw();
+		NotifyMoveCursorToIdx(file_data, idx);
+		break;
+	}
+	case 'n': {
+		if (memory_search_str.empty()) break;
+
+		STD::MyString str = memory_search_str.substr(1);
+
+		if (memory_search_str[0] == '/' && idx != file_data.length() - 1) {
+			if (m_ProcPressedSearchEnd(idx + 1, str)) {
+				NotifyMoveCursorToIdx(file_data, idx);
+			}
+		}
+
+		else if (memory_search_str[0] == '?' && idx != 0) {
+			if (m_ProcPressedSearchBegin(idx - 1, str)) {
+				NotifyMoveCursorToIdx(file_data, idx);
+			}
+		}
+		
+		break;
+	}
+	case 'N': {
+		if (memory_search_str.empty()) return 1;
+		STD::MyString str = memory_search_str.substr(1);
+
+		if (memory_search_str[0] == '/' && idx != 0) {
+			if (m_ProcPressedSearchBegin(idx - 1, str)) {
+				NotifyMoveCursorToIdx(file_data, idx);
+			}
+		}
+
+		else if (memory_search_str[0] == '?' && idx != file_data.length() - 1) {
+			if (m_ProcPressedSearchEnd(idx + 1, str)) {
+				NotifyMoveCursorToIdx(file_data, idx);
+			}
+		}
+
 		break;
 	}
 	case 'g':
+	{
+		SendNavigation(file_data, idx, key);
+		break;
+	}
+	case 'r':
 	{
 		SendNavigation(file_data, idx, key);
 		break;
@@ -433,18 +491,23 @@ int WindowModel::GetKeyFromNavigation(int key)
 	}
 	case '/':
 	{
-		curr_status = SEARCH;
-		NotifyUpdateMode(mode_str[SEARCH], SEARCH);
+		SetStatus(SEARCH);
 		search_str.append(1, key);
 		NotifyUpdateSearch(search_str);
 		break;
 	}
 	case '?':
 	{
-		curr_status = SEARCH;
-		NotifyUpdateMode(mode_str[SEARCH], SEARCH);
+		SetStatus(SEARCH);
 		search_str.append(1, key);
 		NotifyUpdateSearch(search_str);
+		break;
+	}
+	case ':':
+	{
+		SetStatus(COMMAND);
+		NotifyClearCmd();
+		break;
 	}
 	default:
 		break;
@@ -453,35 +516,46 @@ int WindowModel::GetKeyFromNavigation(int key)
 	command_NG.clear();
 	return 1;
 }
-void WindowModel::m_ProcPressedSerchEnd(size_t new_idx, STD::MyString search_str)
+void WindowModel::GetSymbolReplace(int c)
+{
+	if (!m_IsLetterASCII(file_data[idx]) && file_data[idx] != ' ') return;
+	file_data[idx] = c;
+	NotifyPrintLineByLineXY(file_data, 0, 0, 2);
+}
+bool WindowModel::m_ProcPressedSearchBegin(size_t new_idx, STD::MyString search_str)
+{
+	size_t find_idx = m_ReversFind(search_str.c_str(), new_idx - search_str.length() + 1);
+	if (find_idx == STD::MyString::npos) return false;
+	idx = find_idx;
+	return true;
+}
+bool WindowModel::m_ProcPressedSearchEnd(size_t new_idx, STD::MyString search_str)
 {
 	size_t find_idx = file_data.find(search_str.c_str(), new_idx);
 
-	if (find_idx == STD::MyString::npos) return;
+	if (find_idx == STD::MyString::npos) return false;
 	idx = find_idx;
-	NotifyMoveCursorToIdx(file_data, idx);
+	return true;
 }
 void WindowModel::m_FindOneWord(size_t* left, size_t* right, size_t temp_idx)
 {
 	if (file_data[temp_idx] == ' ') {
-		while (file_data[temp_idx - 1] == ' ' && temp_idx - 1 != 0)
+		while (temp_idx - 1 != STD::MyString::npos && file_data[temp_idx - 1] == ' ')
 			--temp_idx;
-		if (temp_idx == 1 && file_data[temp_idx] == ' ') temp_idx = 0;
 		*left = temp_idx;
 		temp_idx = idx;
-		while (file_data[temp_idx + 1] == ' ' && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получится удалить \n
+		while (temp_idx + 1 != file_data.size() - 1 && file_data[temp_idx + 1] == ' ') { //вроде бы у нас не получится удалить \n
 			++temp_idx;
 		}
 		*right = temp_idx;
 	}
 	else {
-		while (file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127 && temp_idx - 1 != 0) {
+		while (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1])) {
 			--temp_idx;
 		}
-		if (temp_idx == 1 && file_data[temp_idx - 1] > ' ' && file_data[temp_idx - 1] < 127) temp_idx = 0;
 		*left = temp_idx;
 		temp_idx = idx;
-		while (file_data[temp_idx + 1] > ' ' && file_data[temp_idx + 1] < 127 && temp_idx + 1 != file_data.size() - 1) { //вроде бы у нас не получится удалить \n
+		while (temp_idx + 1 != file_data.size() - 1 && m_IsLetterASCII(file_data[temp_idx - 1])) {
 			++temp_idx;
 		}
 		*right = temp_idx;
@@ -510,18 +584,91 @@ void WindowModel::m_ProcPressedv()
 	size_t len = right - left + 1;
 	copy_str = file_data.substr(left, len);
 }
+bool WindowModel::m_IsLetterASCII(int ch)
+{
+	if (ch <= ' ' || ch >= 127) return false;
+
+	return true;
+}
+
+void WindowModel::m_ProcPressedw()
+{
+	if (idx == file_data.length() - 1) return;
+
+	size_t temp_idx = idx;
+
+	if (file_data[idx] == '\n') ++temp_idx;
+
+	if (file_data[temp_idx] == ' ') {
+		while (temp_idx + 1 < file_data.length() && !m_IsLetterASCII(file_data[temp_idx + 1])) {
+			++temp_idx; //нашла НАЧАЛО след. слова
+		}
+		while (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1]))
+			++temp_idx; //конец след. слова
+	}
+	else {
+		if (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1])) {
+			while (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1]))
+				++temp_idx;
+		}
+		else if (temp_idx + 1 != file_data.length()) {
+			++temp_idx;
+			while (temp_idx + 1 < file_data.length() && !m_IsLetterASCII(file_data[temp_idx + 1])) {
+				++temp_idx; //нашла НАЧАЛО след. слова
+			}
+			while (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1]))
+				++temp_idx; //конец след. слова
+		}
+	}
+	idx = temp_idx;
+}
+
+void WindowModel::m_ProcPressedb()
+{
+	if (idx == 0) return;
+
+	size_t temp_idx = idx;
+
+	if (file_data[idx] == '\n') --temp_idx;
+
+	if (file_data[temp_idx] == ' ') {
+		while (temp_idx - 1 != STD::MyString::npos && !m_IsLetterASCII(file_data[temp_idx - 1])) {
+			--temp_idx; //нашла КОНЕЦ след. слова
+		}
+		while (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1]))
+			--temp_idx; //начало след. слова
+	}
+	else {
+		if (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1])) {
+			while (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1]))
+				--temp_idx;
+		}
+		else if (temp_idx - 1 != STD::MyString::npos) {
+			--temp_idx;
+			while (temp_idx - 1 != STD::MyString::npos && !m_IsLetterASCII(file_data[temp_idx - 1])) {
+				--temp_idx; //нашла конец след. слова
+			}
+			while (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1]))
+				--temp_idx; //начало след. слова
+		}
+	}
+	idx = temp_idx;
+}
 
 void WindowModel::m_ProcPreseedy()
 {
 	copy_str.clear();
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
 	copy_str = file_data.substr(FirstIdxCopyDel, len);
+	if (copy_str[len - 1] != '\n') copy_str.append(1, '\n');
+	//if (copy_str[len - 1] != '\n') copy_str.append(1, '\n');
 	FirstIdxCopyDel = 0; LastIdxCopyDel = 0;
 }
 void WindowModel::m_ProcPressedp()
 {
+	if (idx == file_data.length() - 1) return;//я запрещаю вставлять после \n последнего
 	if (copy_str.empty()) return;
-	if (file_data[idx] == '\n') return;  //я запрещаю вставлять после \n
+	//if (file_data[idx] == '\n') return;  //я запрещаю вставлять после \n
 
 	file_data.insert(idx + 1, copy_str.c_str()); //ПРОТЕСТИТЬ МОЖНО ЛИ ВСТАВИТЬ ПОСЛЕ ПОСЛЕДНЕЙ \n
 	idx += copy_str.length();
@@ -535,11 +682,11 @@ void WindowModel::m_ProcPreseedd()
 {
 	copy_str.clear();
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
-	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return; //нельзя вырезать единствнную \n
 
 	copy_str = file_data.substr(FirstIdxCopyDel, len);
 	m_DeleteLine(0, 0); //0 0 потому что пока что я нигде не использую аргументы этой команды. МБ УДАЛИТЬ ИЗ АРГУМЕНТОВ ИЛИ ПЕРЕДАВАТЬ ПОЛЯ ЭТИ
 }
+
 void WindowModel::m_DeleteLine(size_t first_idx, size_t last_idx)
 {
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
@@ -547,6 +694,7 @@ void WindowModel::m_DeleteLine(size_t first_idx, size_t last_idx)
 	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return; //нельзя удалить одну \n.
 
 	file_data.erase(FirstIdxCopyDel, len);
+	file_data.insert(FirstIdxCopyDel, "\n");
 	idx = FirstIdxCopyDel;
 	NotifyUpdateVector(file_data);
 	NotifyUpdateLineStats();
@@ -557,281 +705,28 @@ void WindowModel::m_DeleteLine(size_t first_idx, size_t last_idx)
 
 void WindowModel::m_ProcPreseedS()
 {
-	//if (file_data.size() == 1 && file_data[0] == '\n') return; заменено: нельзя удалять вообще \n. 
-
-	//ПОСМОТРИ ПОЗМОЖНО ЗАМЕНИТЬ НА m_DeleteLine
-	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
-
-	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return;
-
-	file_data.erase(FirstIdxCopyDel, len);
-	idx = FirstIdxCopyDel;
-	NotifyUpdateVector(file_data);
-	NotifyUpdateLineStats();
-	NotifyPrintLineByLine(file_data, 0, 0);
-	NotifyMoveCursorToIdx(file_data, FirstIdxCopyDel);
-	FirstIdxCopyDel = 0; LastIdxCopyDel = 0;
+	m_DeleteLine(0, 0);
 }
 
 void WindowModel::m_ProcPressedx()
 {
-	//if (file_data.size() == 1 || idx + 1 == file_data.size()) return;
 	if (idx == file_data.size() - 1 || idx + 1 == file_data.size() - 1) return;
+	if (idx + 2 == file_data.size() - 1) return;
 	//if (idx + 1 == '\n') return;
 
 	file_data.erase(idx + 1, 1);
 	NotifyUpdateVector(file_data);
 	NotifyUpdateLineStats();
-	NotifyPrintLineByLine(file_data, 0, 0);
-	NotifyMoveCursorToIdx(file_data, idx); //можно заменить такое трудоемкое дейсвтие MOVEXY и сказать остаться на месте
+	NotifyPrintLineByLineXY(file_data, 0, 0, 2);
+	//NotifyPrintLineByLine(file_data, 0, 0);
+	//NotifyMoveCursorToIdx(file_data, idx); //можно заменить такое трудоемкое дейсвтие MOVEXY и сказать остаться на месте
 }
 void WindowModel::m_ProcPressedi()
 {
 	flag_changes = true;
-	curr_status = NORMAL;
-	NotifyUpdateMode(mode_str[NORMAL], NORMAL);
+	SetStatus(NORMAL);
 	NotifyMoveCursorToIdx(file_data, idx);
 }
-
-
-//ДАЛЬШЕ ВЕРОЯТНО УДАЛИТЬ НО НЕ ВСЕ!!!
-bool WindowModel::m_CheckScrollDown() const
-{
-	if (y > IDX_LAST_LINE /*&& TODO еще что-то */) 
-		return true;
-	return false;
-
-}
-
-bool WindowModel::m_CheckScrollUp() const
-{
-	if (y < 0 && idx - x != 0) {
-		return true;
-	}
-	return false; 
-}
-bool WindowModel::m_ScrollDown(int curr_pos, int n)
-{
-	if (!m_CheckScrollDown())
-		return false;
-	idx_first_line = m_CountIdxFirstLineDown(1);
-	const char* ptr = file_data.c_str() + idx_first_line;
-	NotifymvPrintMsg(ptr, 0, 0);
-	y = IDX_LAST_LINE;
-	return true;
-}
-bool WindowModel::m_ScrollUp(int curr_pos, int n)
-{
-	if (!m_CheckScrollUp())
-		return false;
-	idx_first_line = m_CountIdxFirstLineUp(1);
-	const char* ptr = file_data.c_str() + idx_first_line;
-	NotifymvPrintMsg(ptr, 0, 0);
-	y = 0;
-	return true;
-}
-
-
-
-void WindowModel::m_ProcPressedKeyLeft()
-{
-	if (file_data[idx] == '\n') return;
-	size_t curr_idx = idx;
-	if (curr_idx > 0 && file_data[idx - 1] != '\n') {
-		if (x == 0) {
-			x = MAX_NCOLS;
-			y--;
-			m_ScrollUp(0, 1);
-		}
-		x--; idx--; x_nav = x;
-	}
-	NotifyMoveCursor(y, x_nav);
-}
-
-void WindowModel::m_ProcPressedKeyRight()
-{
-	if (file_data[idx] == '\n') return;
-	if (idx + 1 < file_data.length() - 1 && file_data[idx + 1] != '\n') {
-		if (x == IDX_LAST_COL) {
-			x = -1;
-			y++;
-			m_ScrollDown(0, 1);
-		}
-		x++; idx++; x_nav = x;
-	}
-	NotifyMoveCursor(y, x_nav);
-}
-
-void WindowModel::m_ProcPressedDollar()
-{
-	if (file_data[idx] == '\n') return;
-	while (idx + 1 < file_data.length() - 1 && file_data[idx + 1] != '\n') {
-		m_ProcPressedKeyRight();
-	}
-}
-
-void WindowModel::m_ProcPressedZero()
-{
-	if (file_data[idx] == '\n') return;
-	while (idx > 0 && file_data[idx - 1] != '\n'){
-		m_ProcPressedKeyLeft();
-	}
-}
-
-size_t WindowModel::m_CountIdxFirstLineDown(int n) const
-{
-	if (idx - x == 0) return 0; //строка единственная
-	size_t curr_idx_f = idx_first_line;
-	int x_curr = 0;
-	for (int i = 0; i < n; i++)
-	{
-		while (file_data[curr_idx_f] != '\n') {
-			++curr_idx_f; ++x_curr;
-			if (x_curr == IDX_LAST_COL) {
-				x_curr = 0;
-				break;
-			}
-		}
-		++curr_idx_f;
-	}
-	return curr_idx_f;
-}
-
-size_t WindowModel::m_CountIdxFirstLineUp(int n) const
-{
-	//todo тут вообще все
-	if (idx - x == 0) 
-		return 0; //строка единственная, но там и так тыща проверок, вряд ли такое случится.
-	size_t curr_idx_f = idx_first_line - 1;
-	if (curr_idx_f == 0 || file_data[curr_idx_f - 1] == '\n')
-		return curr_idx_f;
-	--curr_idx_f;
-	int x_curr = IDX_LAST_COL;
-	for (int i = 0; i < n; i++) {
-		while (curr_idx_f != 0 && file_data[curr_idx_f] != '\n') {
-			--curr_idx_f; --x_curr;
-			if (x_curr == 0) {
-				break;
-			}
-		}
-		if (curr_idx_f > 0) ++curr_idx_f;
-	}
-	return 0;
-}
-
-void WindowModel::m_GotoXNav()
-{
-	int curr_pos = 0;
-	while (curr_pos < (x_nav + 1) && file_data[idx] != '\n' && file_data[idx] != '\0')
-	{
-		//(x_nav + 1) чтобы --curr_pos после цикла всегда давало верный шаг
-		++curr_pos; ++idx; ++x;
-	}
-	--idx; --curr_pos; --x;
-	if (curr_pos == -1) {
-		idx++;
-		curr_pos++; ++x;
-	}
-}
-//void WindowModel::m_ProcPressedKeyDown()
-//{
-//	int x_nav_curr = x_nav;
-//	m_ProcPressedDollar();
-//	x_nav = x_nav_curr;
-//	if (idx + 1 > (file_data.length() - 1)) return;
-//	if (file_data[idx] == '\n') {
-//		++idx;
-//	}
-//	else idx += 2;
-//
-//	x = 0; ++y; ++num_curr_line;
-//	m_ScrollDown(2, 1);
-//	if (y > IDX_LAST_LINE) y = IDX_LAST_LINE; //вообще не нужно, но на всякий случай
-//	NotifyUpdateLineStats(num_curr_line, num_lines);
-//	m_GotoXNav();
-//	NotifyMoveCursor(y, x);
-//}
-//
-//size_t WindowModel::m_FindStartIdxLine()
-//{
-//	return 0;
-//}
-//
-//void WindowModel::m_ProcPressedKeyUp()
-//{
-//	//ЗДЕСЬ проблемы
-//	if (idx - x == 0) return;
-//
-//	char c = file_data[idx];
-//	int x_nav_curr = x_nav; 
-//	m_ProcPressedZero();
-//	x_nav = x_nav_curr;
-//	--idx; --y; 
-//	m_ScrollUp(2, 1);
-//
-//	if (file_data[idx - 1] != '\n') idx--;
-//	
-//	while (idx != 0 && file_data[idx] != '\n') {
-//		--idx;
-//	}
-//
-//	//после этого текущий х - НЕ ноль
-//
-//	x = 0; --y;  --num_curr_line;
-//	m_ScrollUp(2, 1);
-//	if (y < 0) y = 0; //костыль?
-//	NotifyUpdateLineStats(num_curr_line, num_lines);
-//	m_GotoXNav();
-//	NotifyMoveCursor(y, x);
-//	/*
-//	int curr_pos = 0;
-//	size_t temp_idx = 0, next_idx = 0, curr_idx = idx;
-//
-//	if (file_data[idx] == '\n') {
-//		idx--;
-//	}
-//	else idx = m_ReversFind("\n", idx);
-//
-//	if (idx != 0) {
-//		next_idx = m_ReversFind("\n", idx - 1);
-//		if (next_idx == STD::MyString::npos) {
-//			if (file_data[idx - 1] == '\n') {}
-//			else idx = 0;
-//		}
-//		else idx = next_idx + 1;
-//	}
-//
-//	while (curr_pos < (x_nav + 1) && file_data[idx] != '\n' && file_data[idx] != '\0')
-//	{
-//		//(x_nav + 1) чтобы --curr_pos после цикла всегда давало верный шаг
-//		++curr_pos; ++idx;
-//	}
-//	--idx; --curr_pos;
-//	if (curr_pos == -1) {
-//		idx++;
-//		curr_pos++;
-//	}
-//
-//	if (y - 1 < 0)
-//	{
-//		if (m_CheckScrollDown())
-//			//if (m_ScrollUp(curr_pos, 1))
-//		{
-//			m_ScrollDown(curr_pos, 1);
-//			//idx_last_line = idx - curr_pos;
-//			num_curr_line--;
-//			NotifyUpdateLineStats(num_curr_line, num_lines);
-//			NotifyMoveCursor(y, curr_pos);
-//		}
-//		else idx = curr_idx;
-//	}
-//	else {
-//		num_curr_line--;
-//		NotifyUpdateLineStats(num_curr_line, num_lines);
-//		NotifyMoveCursor(y - 1, curr_pos);
-//	}
-//	*/
-//}
 
 bool WindowModel::m_find_compare(const char* str, size_t len, size_t pos) const
 {
@@ -872,89 +767,3 @@ size_t WindowModel::m_ReversFind(const char* str, size_t start_idx) const
 	return m_reverse_find(str, start_idx, strlen(str));
 }
 
-
-size_t WindowModel::m_FindSymbol(size_t idx) const
-{
-	return 0;
-}
-
-size_t WindowModel::m_DropSpace(size_t idx_) const
-{
-	while (idx_ - file_data.find(" ", idx_ + 1) == 1) idx_++; //если idx_ = npos - 1, то катастрофа. 
-	if (file_data[idx_ + 1] == '\0') {
-		beep();
-		return STD::MyString::npos;
-	}
-	else idx_++;
-	return idx;
-}
-
-void WindowModel::ProcPressedw()
-{
-	//m_GetYX(&y, &x);
-	int new_x = x, new_y = y;
-	size_t temp_idx = idx, idx_s = idx;
-
-	if (file_data[idx + 1] != '\0') {
-		size_t idx_ = file_data.find(" ", idx);
-		size_t idx_n = file_data.find("\n", idx);
-
-		if (idx_ < idx_n) { // раньше _
-			idx_s = m_DropSpace(idx_);
-			if (idx_s == STD::MyString::npos) {
-				beep();
-				return;
-			}
-
-			if (file_data[idx_ + 1] == '\0') {
-				beep();
-				return;
-			}
-			else if (file_data[idx_ + 1] == '\n') {
-				while (1) {
-					size_t idx_n_2 = file_data.find("\n", idx);
-					size_t idx_symbol = idx_;
-					while (file_data[idx_] < 33 && file_data[idx_] > 127) idx_symbol++;
-					//if ()
-				}
-
-
-				if (file_data[idx_ + 1] != '\0') {
-					new_y++; idx_++;
-					size_t idx_n = file_data.find("\n", idx);
-				}
-				else {//TODO
-				}
-				//while ()
-
-			}
-			else {
-				idx = idx_ + 1;
-				x_nav += idx - temp_idx; x = x_nav; //прокатит чисто разницей idx потом учто не было перехода на строку.
-				NotifyMoveCursor(y, x_nav);
-			}
-
-		}
-		else if (idx_ != STD::MyString::npos) {
-			new_y++;
-			
-			if (file_data[idx_n + 1] == ' ') {
-
-			}
-			else if (file_data[idx_n + 1] == '\0') {
-				beep();
-				return;
-			}
-			else if (file_data[idx_n + 1] == '\n') {
-
-			}
-			else {
-				idx = idx_n + 1;
-				x_nav = 0; x = x_nav;
-				NotifyMoveCursor(new_y, x_nav);
-			}
-		}
-		else beep();
-	}
-	else beep();
-}

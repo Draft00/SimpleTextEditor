@@ -34,8 +34,8 @@ void ConsoleView::AddController(Controller* Controller)
 void ConsoleView::NewText()
 {
     new_idx = 0;  y = 0; x = 0;
-    table_y = 0; m_TableYFirstLine = 0;
-    new_y = 0; x_nav = 0;
+    m_TableYFirstLine = 0;
+    x_nav = 0;
     table.clear();
 }
 
@@ -83,26 +83,27 @@ void ConsoleView::PrintLineByLine(const STD::MyString& str, int y_start, int x_s
 }
 void ConsoleView::PrintLineByLineXY(const STD::MyString& str, int y_start, int x_start, int offset)
 {
-    int curr_y = 0, curr_x = 0;
+    int curr_y = 0, curr_x = 0, temp_x = 0;
     getyx(text_win, curr_y, curr_x);
-    if (curr_x == LAST_X || offset == 0) {
-        ++curr_y; curr_x = 0;
+    if (offset == 2) { //остаться на месте
     }
-    else if (curr_x == 0){
-        if (offset < 0) { //я проверяю, что двигать выше некуда, в модели.
-            --curr_y; 
-        }
+    else if (curr_x == LAST_X || offset == 0) {
+        ++curr_y; curr_x = 0;
     }
     else curr_x = curr_x + offset;
 
     if (curr_y > LAST_Y) {
         ++m_TableYFirstLine;
     }
-    else if (curr_y <= 0) {
+    else if (curr_y < 0) {
         if (m_TableYFirstLine > 0) --m_TableYFirstLine;
         curr_y = 0;
         curr_x = table[curr_y + m_TableYFirstLine][LAST_IDX_LINE] - table[curr_y + m_TableYFirstLine][FIRST_IDX_LINE];
+        //if (temp_x < curr_x + offset) curr_x = temp_x;
+        //else if (curr_x != 0) curr_x += offset;
     }
+    getyx(text_win, y, x);
+    UpdateLineStats();
     PrintLineByLine(str, y_start, x_start);
     m_myAdapter->A_wmove(text_win, curr_y, curr_x);
     m_myAdapter->A_wrefresh(text_win);
@@ -140,13 +141,12 @@ void ConsoleView::START()
     m_myAdapter->A_noecho();
     int global_num = 1, choice = 0;
 
-    TEST_NAVI();
+    //TEST_NAVI();
 
     while (curr_status != EXIT)
     {
         if (curr_status == WAITING) {
             m_myAdapter->A_keypad(text_win, true);
-            //m_myAdapter->A_noecho();
             while (curr_status == WAITING) {
                 choice = m_myAdapter->A_wgetch(text_win);
                 m_myController->GetKeyFromView(choice);
@@ -157,7 +157,7 @@ void ConsoleView::START()
             m_myAdapter->A_wmove(cmd_win, 0, 1);
             m_myAdapter->A_wrefresh(cmd_win);
             while (curr_status == COMMAND) {
-                choice = m_myAdapter->A_wgetch(text_win);
+                choice = m_myAdapter->A_wgetch(cmd_win);
                 m_myController->GetKeyFromView(choice);
             }
         }
@@ -188,6 +188,15 @@ void ConsoleView::START()
                 m_myController->GetKeyFromView(choice);
             }
         }
+        if (curr_status == HELP) {
+            m_myAdapter->A_keypad(text_win, true);
+            m_myAdapter->A_wmove(text_win, 0, 0);
+            m_myAdapter->A_wrefresh(text_win);
+            while (curr_status == HELP) {
+                choice = m_myAdapter->A_wgetch(text_win);
+                m_myController->GetKeyFromView(choice);
+            }
+        }
     }
 }
 void ConsoleView::PutModelNewIdx(size_t new_idx)
@@ -201,12 +210,12 @@ void ConsoleView::KeyNavigation(const STD::MyString& str, size_t idx, int comman
     {
 
     case KEY_LEFT: {
-        m_ProcPressedKeyLeft();
+        m_ProcPressedKeyLeft(idx);
         PutModelNewIdx(new_idx);
         break;
     }
     case KEY_RIGHT: {
-        m_ProcPressedKeyRight();
+        m_ProcPressedKeyRight(idx);
         PutModelNewIdx(new_idx);
         break;
     }
@@ -251,6 +260,12 @@ void ConsoleView::KeyNavigation(const STD::MyString& str, size_t idx, int comman
         }
         break;
     }
+    case 'r':
+    {
+        int c = m_myAdapter->A_wgetch(text_win);
+        PutModelReplace(c);
+        break;
+    }
     case 'G':
     {
         m_ProcPressedG(str, idx);
@@ -259,6 +274,10 @@ void ConsoleView::KeyNavigation(const STD::MyString& str, size_t idx, int comman
     default:
         break;
     }
+}
+void ConsoleView::PutModelReplace(int c)
+{
+    m_myController->PutModelReplace(c);
 }
 void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
 {
@@ -270,7 +289,6 @@ void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
     PrintLineByLine(str, 0, 0);
     m_myAdapter->A_wrefresh(text_win);
     x_nav = 0; x = 0;
-    //UpdateLineStats();
     m_myAdapter->A_wmove(text_win, y, x);
     m_myAdapter->A_wrefresh(text_win);
     getyx(text_win, y, x);
@@ -293,21 +311,21 @@ void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)
     new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
 }
 
-void ConsoleView::m_ProcPressedKeyLeft() //гуляем только по линии консоли, не по строке. скролл не нужен.
+void ConsoleView::m_ProcPressedKeyLeft(size_t idx) //гуляем только по линии консоли, не по строке. скролл не нужен.
 {
     getyx(text_win, y, x);
     if (x == 0) return;
     m_myAdapter->A_wmove(text_win, y, x - 1);
     m_myAdapter->A_wrefresh(text_win);
-    --new_idx; --x_nav;
+    new_idx = idx - 1; --x_nav;
 }
-void ConsoleView::m_ProcPressedKeyRight()
+void ConsoleView::m_ProcPressedKeyRight(size_t idx)
 {
     getyx(text_win, y, x);
     if (x == table[m_TableYFirstLine + y][LAST_IDX_LINE] - table[m_TableYFirstLine + y][FIRST_IDX_LINE]) return;
     m_myAdapter->A_wmove(text_win, y, x + 1);
     m_myAdapter->A_wrefresh(text_win);
-    ++new_idx; ++x_nav;
+    new_idx = idx + 1; ++x_nav;
 }
 void ConsoleView::m_ProcPressedDollar()
 {
@@ -410,7 +428,7 @@ void ConsoleView::m_ProcPressedG(const STD::MyString& str, size_t idx)
 
     m_myAdapter->A_wmove(text_win, y, 0);
     m_myAdapter->A_wrefresh(text_win);
-    x_nav = 0; //x = 0; лишнее
+    x_nav = 0;
     getyx(text_win, y, x);
     new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
 }
@@ -445,28 +463,7 @@ void ConsoleView::MoveCursorToIdx(const STD::MyString& str, size_t idx)
     --line;
     int new_x = idx - table[line][FIRST_IDX_LINE];
 
-    //ПОПРОБУЙ ЗАМЕНИТЬ НА СКРОЛЛ НА НЬЮ ЛАЙН
-    if (line > m_TableYFirstLine + LAST_Y) { //если новый индекс ниже экрана, скроллим вниз
-        //while (line > m_TableYFirstLine + LAST_Y) {
-            //++m_TableYFirstLine;
-        //}
-        m_TableYFirstLine = line - LAST_Y;
-        y = LAST_Y;
-        PrintLineByLine(str, 0, 0);
-        m_myAdapter->A_wrefresh(text_win);
-    }
-    else if (line < m_TableYFirstLine) {//новый индекс выше, скролл вверх
-        //while (line < m_TableYFirstLine) {
-        //    --m_TableYFirstLine;
-        //}
-        m_TableYFirstLine = line;
-        y = 0;
-        PrintLineByLine(str, 0, 0);
-        m_myAdapter->A_wrefresh(text_win);
-    }
-    else y = line - m_TableYFirstLine;
-
-    UpdateLineStats();
+    m_ScrollForNewLine(str, idx, line);
 
     m_myAdapter->A_wmove(text_win, y, new_x);
     m_myAdapter->A_wrefresh(text_win);
@@ -481,6 +478,9 @@ void ConsoleView::JumpTo(const STD::MyString& str, size_t idx, const STD::MyStri
     m_ScrollForNewLine(str, idx, new_line);
     m_myAdapter->A_wmove(text_win, y, 0);
     m_myAdapter->A_wrefresh(text_win);
+    getyx(text_win, y, x);
+    new_idx = new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
+    PutModelNewIdx(new_idx);
     x_nav = 0;
 }
 void ConsoleView::PutLastFirstIdx()
@@ -491,99 +491,10 @@ void ConsoleView::PutLastFirstIdx()
     m_myController->PutModelFirstLastIdx(first_idx, last_idx);
 }
 
-//void ConsoleView::scroll_down(int curr_pos)
-//{
-//    wscrl(text_win, 1);
-//    wrefresh(text_win);
-//    //char c = m_mymodel->file_data[m_mymodel->idx];
-//    size_t idx_print = m_mymodel->idx - curr_pos;
-//    size_t pos = m_mymodel->file_data.find("\n", idx_print);
-//    if (pos == STD::MyString::npos) {
-//        beep();
-//        return;
-//    }
-//    STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
-//    mvwprintw(text_win, y, 0, str_print.c_str());
-//    m_mymodel->num_curr_line++;
-//    //ЭТО ВЕРНО НО ПЕРЕДЕЛЫВАТЬ
-//    //UpdateLineStats();
-//    wmove(text_win, y, curr_pos);
-//}
-
-void ConsoleView::PressedKeyUp()
-{
-//    int temp_x = 0;
-//    getyx(text_win, y, x);
-//    if (m_mymodel->idx - x > 0) {
-//        int curr_pos = 0;
-//        //getyx(text_win, y, x);
-//
-//        if (m_mymodel->file_data[m_mymodel->idx] == '\n') {
-//            m_mymodel->idx--;
-//            if (m_mymodel->file_data[m_mymodel->idx - 1] != '\n')
-//                m_mymodel->idx--;
-//        }
-//        else
-//        {
-//            while (m_mymodel->file_data[m_mymodel->idx] != '\n') {
-//                m_mymodel->idx--;
-//            }
-//            if (m_mymodel->idx > 0 && m_mymodel->file_data[m_mymodel->idx - 1] != '\n') {
-//                m_mymodel->idx--;
-//            }
-//            else {
-//
-//            }
-//                
-//        }
-//        if (m_mymodel->file_data[m_mymodel->idx] != '\n')
-//        {
-//            while (m_mymodel->file_data[m_mymodel->idx] != '\n' && m_mymodel->idx > 0) {
-//                m_mymodel->idx--;
-//            }
-//            //if (m_mymodel->idx == STD::MyString::npos) m_mymodel->idx = 0;
-//            if (m_mymodel->idx != 0)
-//                m_mymodel->idx++;
-//        }
-//        while (curr_pos < (x_nav + 1) && m_mymodel->file_data[m_mymodel->idx] != '\n') { //&& m_mymodel->file_data[m_mymodel->idx] != '\0') {
-//            ++curr_pos; m_mymodel->idx++;
-//        }
-//        m_mymodel->idx--;  --curr_pos;
-//        if (curr_pos == -1) {
-//            m_mymodel->idx++;
-//            curr_pos++;
-//        }
-//        if (y - 1 < 0)
-//        {
-//            wscrl(text_win, -1);
-//            wrefresh(text_win);
-//            //char c = m_mymodel->file_data[m_mymodel->idx];
-//            size_t idx_print = m_mymodel->idx - curr_pos;
-//            size_t pos = m_mymodel->file_data.find("\n", idx_print);
-//            if (pos == STD::MyString::npos) {
-//                beep();
-//                return;
-//            }
-//            STD::MyString str_print = m_mymodel->file_data.substr(idx_print, pos - idx_print);
-//            mvwprintw(text_win, y, 0, str_print.c_str());
-//            m_mymodel->num_curr_line--;
-//            //UpdateLineStats(); верно
-//            wmove(text_win, y, curr_pos);
-//        }
-//        else {
-//            m_mymodel->num_curr_line--;
-//            //UpdateLineStats(); верно
-//            wmove(text_win, y - 1, curr_pos);
-//        }
-//        wrefresh(text_win);
-//    }
-//    else beep();
-}
-
 void ConsoleView::ClearCmd()
 {
     m_myAdapter->A_werase(cmd_win);
-    m_myAdapter->A_wprintw(mode_win, ":");
+    m_myAdapter->A_wprintw(cmd_win, ":");
     m_myAdapter->A_wrefresh(cmd_win);
 }
 
