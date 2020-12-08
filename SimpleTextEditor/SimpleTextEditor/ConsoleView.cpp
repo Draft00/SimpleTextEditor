@@ -291,6 +291,7 @@ void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
     PrintLineByLine(str, 0, 0);
     m_myAdapter->A_wrefresh(text_win);
     x_nav = 0; x = 0;
+    UpdateLineStats();
     m_myAdapter->A_wmove(text_win, y, x);
     m_myAdapter->A_wrefresh(text_win);
     getyx(text_win, y, x);
@@ -306,7 +307,7 @@ void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)
     PrintLineByLine(str, 0, 0);
     m_myAdapter->A_wrefresh(text_win);
     x_nav = 0; x = 0;
-    //UpdateLineStats();
+    UpdateLineStats();
     m_myAdapter->A_wmove(text_win, y, x);
     m_myAdapter->A_wrefresh(text_win);
     getyx(text_win, y, x);
