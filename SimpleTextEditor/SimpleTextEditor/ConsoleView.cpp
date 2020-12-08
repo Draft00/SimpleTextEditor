@@ -281,7 +281,7 @@ void ConsoleView::PutModelReplace(int c)
 {
     m_myController->PutModelReplace(c);
 }
-void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
+void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx) //m_TableYFirstLine _+ y_(was added) - TEXT_W_LINES
 {
     getyx(text_win, y, x);
     if (m_TableYFirstLine + y - TEXT_W_LINES < 0) {
@@ -297,7 +297,7 @@ void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
     getyx(text_win, y, x);
     new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
 }
-void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)
+void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)//m_TableYFirstLine _+ y_(was added) + TEXT_W_LINES
 {
     getyx(text_win, y, x);
     if (m_TableYFirstLine + y + TEXT_W_LINES > table.size() - 1) {
