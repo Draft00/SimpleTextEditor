@@ -19,7 +19,9 @@ void Observable::NotifyUpdateLineStats() {
 void Observable::NotifyUpdateCmd(const STD::MyString& str) {
     m_view_observer->UpdateCmd(str);
 }
-
+void Observable::NotifyNewText() {
+    m_view_observer->NewText();
+}
 void Observable::NotifyUpdateSearch(const STD::MyString& str) {
     m_view_observer->UpdateSearch(str);
 }

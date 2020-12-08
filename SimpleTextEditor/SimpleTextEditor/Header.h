@@ -69,7 +69,7 @@ public:
     void NotifyGetLastFirstIdx();
     void NotifyJumpTo(const STD::MyString& str, size_t idx, const STD::MyString& line);
     void NotifyIdxForMove(const STD::MyString& str, size_t idx);
-
+    void NotifyNewText();
     void SendNavigation(const STD::MyString& str, size_t idx, int command);
 private:
     Observer* m_view_observer = nullptr; 

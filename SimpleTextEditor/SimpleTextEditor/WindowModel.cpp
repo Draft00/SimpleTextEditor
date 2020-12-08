@@ -1,4 +1,4 @@
-#include "Header.h"
+п»ї#include "Header.h"
 
 WindowModel::WindowModel() {
 
@@ -147,18 +147,12 @@ int WindowModel::GetKeyFromNormal(int key)
 		SendNavigation(file_data, idx, key);
 	}
 	else if (key == ESC) {
-		//TODO выхож из режима и в навигацию ВРОДЕ ТАК НО НАДО ТЕСТИТЬ ЕЩЕ
 		command_NG.clear();
 		SetStatus(NAVIGATION);
-
-		//curr_status = NAVIGATION;
-		//NotifyUpdateMode(mode_str[NAVIGATION], NAVIGATION); //заменила на SetStatus
-
-		//NotifyMoveCursorToIdx(file_data, idx); //не нужно, так как каждый раз при переходе в режим требую.
 	}
 	else if (key == BACKSPACE) {
-		if (idx != 0 && idx != file_data.length() - 1) { //по идее последнюю \n ну никак не удалишь так что else и не нужен/
-			//еще заблокировала возможность удалить предпоследнюю \n.
+		if (idx != 0 && idx != file_data.length() - 1) { //РїРѕ РёРґРµРµ РїРѕСЃР»РµРґРЅСЋСЋ \n РЅСѓ РЅРёРєР°Рє РЅРµ СѓРґР°Р»РёС€СЊ С‚Р°Рє С‡С‚Рѕ else Рё РЅРµ РЅСѓР¶РµРЅ/
+			//РµС‰Рµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°Р»Р° РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ СѓРґР°Р»РёС‚СЊ РїСЂРµРґРїРѕСЃР»РµРґРЅСЋСЋ \n.
 			file_data.erase(idx - 1, 1);
 			idx--;
 			NotifyUpdateVector(file_data);
@@ -247,6 +241,7 @@ int WindowModel::ParseCommand()
 			filename = str.substr(2);
 			OpenFile(filename);
 			NotifyEndCmd();
+			NotifyNewText();
 			NotifyUpdateVector(file_data);
 			NotifyUpdateLineStats();
 			NotifyPrintLineByLine(file_data, 0, 0);
@@ -448,12 +443,12 @@ int WindowModel::GetKeyFromNavigation(int key)
 		break;
 	}
 	case 'I': { //TODO TEST
-		SendNavigation(file_data, idx, '0'); //перейти в начало строки
+		SendNavigation(file_data, idx, '0'); //РїРµСЂРµР№С‚Рё РІ РЅР°С‡Р°Р»Рѕ СЃС‚СЂРѕРєРё
 		m_ProcPressedi();
 		break;
 	}
 	case 'A': {
-		SendNavigation(file_data, idx, '$'); //перейти в конец строки
+		SendNavigation(file_data, idx, '$'); //РїРµСЂРµР№С‚Рё РІ РєРѕРЅРµС† СЃС‚СЂРѕРєРё
 		m_ProcPressedi();
 		break;
 	}
@@ -464,15 +459,15 @@ int WindowModel::GetKeyFromNavigation(int key)
 	case 'S': {
 		NotifyGetLastFirstIdx();
 		m_ProcPreseedS();
-		m_ProcPressedi(); //меняем режим на режим ввода
+		m_ProcPressedi(); //РјРµРЅСЏРµРј СЂРµР¶РёРј РЅР° СЂРµР¶РёРј РІРІРѕРґР°
 		break;
 	}
-	case 'd': { //вырезать строку
+	case 'd': { //РІС‹СЂРµР·Р°С‚СЊ СЃС‚СЂРѕРєСѓ
 		NotifyGetLastFirstIdx();
 		m_ProcPreseedd();
 		break;
 	}
-	case 'y': { //копировать строку
+	case 'y': { //РєРѕРїРёСЂРѕРІР°С‚СЊ СЃС‚СЂРѕРєСѓ
 		NotifyGetLastFirstIdx();
 		m_ProcPreseedy();
 		break;
@@ -481,11 +476,11 @@ int WindowModel::GetKeyFromNavigation(int key)
 		m_ProcPressedp();
 		break;
 	}
-	case 'c': { //УДАЛИТЬ СЛОВА ИСКЛЮЧАЯ ПРОБЕЛ СПРАВА (\N НЕ ТРОГАЕТСЯ)
+	case 'c': { //РЈР”РђР›РРўР¬ РЎР›РћР’Рђ РРЎРљР›Р®Р§РђРЇ РџР РћР‘Р•Р› РЎРџР РђР’Рђ (\N РќР• РўР РћР“РђР•РўРЎРЇ)
 		m_ProcPressedc();
 		break;
 	}
-	case 'v': { //копировать слово под курсором. видимо те же пробелы и все такое, \n не трогать
+	case 'v': { //РєРѕРїРёСЂРѕРІР°С‚СЊ СЃР»РѕРІРѕ РїРѕРґ РєСѓСЂСЃРѕСЂРѕРј. РІРёРґРёРјРѕ С‚Рµ Р¶Рµ РїСЂРѕР±РµР»С‹ Рё РІСЃРµ С‚Р°РєРѕРµ, \n РЅРµ С‚СЂРѕРіР°С‚СЊ
 		m_ProcPressedv();
 		break;
 	}
@@ -544,7 +539,7 @@ void WindowModel::m_FindOneWord(size_t* left, size_t* right, size_t temp_idx)
 			--temp_idx;
 		*left = temp_idx;
 		temp_idx = idx;
-		while (temp_idx + 1 != file_data.size() - 1 && file_data[temp_idx + 1] == ' ') { //вроде бы у нас не получится удалить \n
+		while (temp_idx + 1 != file_data.size() - 1 && file_data[temp_idx + 1] == ' ') { //РІСЂРѕРґРµ Р±С‹ Сѓ РЅР°СЃ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ СѓРґР°Р»РёС‚СЊ \n
 			++temp_idx;
 		}
 		*right = temp_idx;
@@ -572,7 +567,7 @@ void WindowModel::m_ProcPressedc()
 	file_data.erase(left, len);
 	idx = left;
 	NotifyUpdateVector(file_data);
-	//NotifyUpdateLineStats(); //сомневаюсь, что линия будет меняться, ведь я не могу удалить \n
+	//NotifyUpdateLineStats(); //СЃРѕРјРЅРµРІР°СЋСЃСЊ, С‡С‚Рѕ Р»РёРЅРёСЏ Р±СѓРґРµС‚ РјРµРЅСЏС‚СЊСЃСЏ, РІРµРґСЊ СЏ РЅРµ РјРѕРіСѓ СѓРґР°Р»РёС‚СЊ \n
 	NotifyPrintLineByLine(file_data, 0, 0);
 	NotifyMoveCursorToIdx(file_data, idx);
 }
@@ -584,7 +579,7 @@ void WindowModel::m_ProcPressedv()
 	size_t len = right - left + 1;
 	copy_str = file_data.substr(left, len);
 }
-bool WindowModel::m_IsLetterASCII(int ch)
+bool WindowModel::m_IsLetterASCII(int ch) //not quite a "letter"
 {
 	if (ch <= ' ' || ch >= 127) return false;
 
@@ -601,10 +596,10 @@ void WindowModel::m_ProcPressedw()
 
 	if (file_data[temp_idx] == ' ') {
 		while (temp_idx + 1 < file_data.length() && !m_IsLetterASCII(file_data[temp_idx + 1])) {
-			++temp_idx; //нашла НАЧАЛО след. слова
+			++temp_idx; //РЅР°С€Р»Р° РќРђР§РђР›Рћ СЃР»РµРґ. СЃР»РѕРІР°
 		}
 		while (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1]))
-			++temp_idx; //конец след. слова
+			++temp_idx; //РєРѕРЅРµС† СЃР»РµРґ. СЃР»РѕРІР°
 	}
 	else {
 		if (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1])) {
@@ -614,10 +609,10 @@ void WindowModel::m_ProcPressedw()
 		else if (temp_idx + 1 != file_data.length()) {
 			++temp_idx;
 			while (temp_idx + 1 < file_data.length() && !m_IsLetterASCII(file_data[temp_idx + 1])) {
-				++temp_idx; //нашла НАЧАЛО след. слова
+				++temp_idx; //РЅР°С€Р»Р° РќРђР§РђР›Рћ СЃР»РµРґ. СЃР»РѕРІР°
 			}
 			while (temp_idx + 1 < file_data.length() && m_IsLetterASCII(file_data[temp_idx + 1]))
-				++temp_idx; //конец след. слова
+				++temp_idx; //РєРѕРЅРµС† СЃР»РµРґ. СЃР»РѕРІР°
 		}
 	}
 	idx = temp_idx;
@@ -633,10 +628,10 @@ void WindowModel::m_ProcPressedb()
 
 	if (file_data[temp_idx] == ' ') {
 		while (temp_idx - 1 != STD::MyString::npos && !m_IsLetterASCII(file_data[temp_idx - 1])) {
-			--temp_idx; //нашла КОНЕЦ след. слова
+			--temp_idx; //РЅР°С€Р»Р° РљРћРќР•Р¦ СЃР»РµРґ. СЃР»РѕРІР°
 		}
 		while (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1]))
-			--temp_idx; //начало след. слова
+			--temp_idx; //РЅР°С‡Р°Р»Рѕ СЃР»РµРґ. СЃР»РѕРІР°
 	}
 	else {
 		if (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1])) {
@@ -646,10 +641,10 @@ void WindowModel::m_ProcPressedb()
 		else if (temp_idx - 1 != STD::MyString::npos) {
 			--temp_idx;
 			while (temp_idx - 1 != STD::MyString::npos && !m_IsLetterASCII(file_data[temp_idx - 1])) {
-				--temp_idx; //нашла конец след. слова
+				--temp_idx; //РЅР°С€Р»Р° РєРѕРЅРµС† СЃР»РµРґ. СЃР»РѕРІР°
 			}
 			while (temp_idx - 1 != STD::MyString::npos && m_IsLetterASCII(file_data[temp_idx - 1]))
-				--temp_idx; //начало след. слова
+				--temp_idx; //РЅР°С‡Р°Р»Рѕ СЃР»РµРґ. СЃР»РѕРІР°
 		}
 	}
 	idx = temp_idx;
@@ -666,11 +661,10 @@ void WindowModel::m_ProcPreseedy()
 }
 void WindowModel::m_ProcPressedp()
 {
-	if (idx == file_data.length() - 1) return;//я запрещаю вставлять после \n последнего
+	if (idx == file_data.length() - 1) return;//СЏ Р·Р°РїСЂРµС‰Р°СЋ РІСЃС‚Р°РІР»СЏС‚СЊ РїРѕСЃР»Рµ \n РїРѕСЃР»РµРґРЅРµРіРѕ
 	if (copy_str.empty()) return;
-	//if (file_data[idx] == '\n') return;  //я запрещаю вставлять после \n
 
-	file_data.insert(idx + 1, copy_str.c_str()); //ПРОТЕСТИТЬ МОЖНО ЛИ ВСТАВИТЬ ПОСЛЕ ПОСЛЕДНЕЙ \n
+	file_data.insert(idx + 1, copy_str.c_str());
 	idx += copy_str.length();
 	NotifyUpdateVector(file_data);
 	NotifyUpdateLineStats();
@@ -684,14 +678,14 @@ void WindowModel::m_ProcPreseedd()
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
 
 	copy_str = file_data.substr(FirstIdxCopyDel, len);
-	m_DeleteLine(0, 0); //0 0 потому что пока что я нигде не использую аргументы этой команды. МБ УДАЛИТЬ ИЗ АРГУМЕНТОВ ИЛИ ПЕРЕДАВАТЬ ПОЛЯ ЭТИ
+	m_DeleteLine(0, 0); //0 0 РїРѕС‚РѕРјСѓ С‡С‚Рѕ РїРѕРєР° С‡С‚Рѕ СЏ РЅРёРіРґРµ РЅРµ РёСЃРїРѕР»СЊР·СѓСЋ Р°СЂРіСѓРјРµРЅС‚С‹ СЌС‚РѕР№ РєРѕРјР°РЅРґС‹. РњР‘ РЈР”РђР›РРўР¬ РР— РђР Р“РЈРњР•РќРўРћР’ РР›Р РџР•Р Р•Р”РђР’РђРўР¬ РџРћР›РЇ Р­РўР
 }
 
 void WindowModel::m_DeleteLine(size_t first_idx, size_t last_idx)
 {
 	size_t len = LastIdxCopyDel - FirstIdxCopyDel + 1;
 
-	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return; //нельзя удалить одну \n.
+	if (len == 1 && file_data[FirstIdxCopyDel] == '\n') return; //РЅРµР»СЊР·СЏ СѓРґР°Р»РёС‚СЊ РѕРґРЅСѓ \n.
 
 	file_data.erase(FirstIdxCopyDel, len);
 	file_data.insert(FirstIdxCopyDel, "\n");
@@ -719,7 +713,7 @@ void WindowModel::m_ProcPressedx()
 	NotifyUpdateLineStats();
 	NotifyPrintLineByLineXY(file_data, 0, 0, 2);
 	//NotifyPrintLineByLine(file_data, 0, 0);
-	//NotifyMoveCursorToIdx(file_data, idx); //можно заменить такое трудоемкое дейсвтие MOVEXY и сказать остаться на месте
+	//NotifyMoveCursorToIdx(file_data, idx); //РјРѕР¶РЅРѕ Р·Р°РјРµРЅРёС‚СЊ С‚Р°РєРѕРµ С‚СЂСѓРґРѕРµРјРєРѕРµ РґРµР№СЃРІС‚РёРµ MOVEXY Рё СЃРєР°Р·Р°С‚СЊ РѕСЃС‚Р°С‚СЊСЃСЏ РЅР° РјРµСЃС‚Рµ
 }
 void WindowModel::m_ProcPressedi()
 {
@@ -743,7 +737,7 @@ size_t WindowModel::m_reverse_find(const char* str, size_t start_idx, size_t len
 	if (len_s == 0)
 		return 0;
 	//return ResultPos;
-	//if (start_idx == STD::MyString::npos) //возможно, полная ерунда
+	//if (start_idx == STD::MyString::npos) //РІРѕР·РјРѕР¶РЅРѕ, РїРѕР»РЅР°СЏ РµСЂСѓРЅРґР°
 		//start_idx = file_data.length()- 1;
 	size_t len_ = file_data.length();
 	for (; start_idx > 0; --start_idx)
