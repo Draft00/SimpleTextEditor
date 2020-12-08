@@ -161,8 +161,6 @@ int main()
     Controller Controller(&Model);
 	View.AddController(&Controller);
 	View.START();
-    //Controller.start();
-    getch();
     return 0;
 	
 }
