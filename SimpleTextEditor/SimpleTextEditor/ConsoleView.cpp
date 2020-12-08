@@ -270,6 +270,7 @@ void ConsoleView::KeyNavigation(const STD::MyString& str, size_t idx, int comman
     case 'G':
     {
         m_ProcPressedG(str, idx);
+        PutModelNewIdx(new_idx);
         break;
     }
     default:
