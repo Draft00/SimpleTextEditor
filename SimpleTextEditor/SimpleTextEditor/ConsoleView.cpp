@@ -1,3 +1,5 @@
+#define _WIN32_WINNT 0x0500
+#include <windows.h>
 #include "Header.h"
 
 ConsoleView::ConsoleView(AdapterPDCurses* Adapter)
@@ -9,6 +11,8 @@ ConsoleView::ConsoleView(AdapterPDCurses* Adapter)
     m_myAdapter->A_initscr();
     m_myAdapter->A_resize_term(MAX_NLINES, MAX_NCOLS);
     //refresh();
+    HWND consoleWindow = GetConsoleWindow();
+    SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
 
     m_init_coloros_pair();
 

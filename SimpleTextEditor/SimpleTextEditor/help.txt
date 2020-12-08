@@ -1,3 +1,4 @@
+ESC - Exit from mode Help, Edit, Cmd.
 RIGHT/LEFT - Move the cursor to the right/left by 1 position.
 UP/DOWN - Move the cursor up/down 1 line in the console.
 0/$ - Move the cursor to the beginning/end of the console line.

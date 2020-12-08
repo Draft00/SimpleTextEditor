@@ -157,7 +157,7 @@ int main()
 	//подождите минутку. я нигде не присваиваю View указатель Adapter, так почему это вообще работает??
 
     ConsoleView View(&Adapter);
-	Model.AddObserver(&View); //почему не может?
+	Model.AddObserver(&View); 
     Controller Controller(&Model);
 	View.AddController(&Controller);
 	View.START();
