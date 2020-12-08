@@ -284,7 +284,7 @@ void ConsoleView::PutModelReplace(int c)
 void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
 {
     getyx(text_win, y, x);
-    if (m_TableYFirstLine - TEXT_W_LINES < 0) {
+    if (m_TableYFirstLine + y - TEXT_W_LINES < 0) {
         y = 0; m_TableYFirstLine = 0;
     }
     else m_TableYFirstLine -= TEXT_W_LINES;
@@ -300,7 +300,7 @@ void ConsoleView::m_ProcPressedKeyPGUP(const STD::MyString& str, size_t idx)
 void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)
 {
     getyx(text_win, y, x);
-    if (m_TableYFirstLine + TEXT_W_LINES > table.size() - 1) {
+    if (m_TableYFirstLine + y + TEXT_W_LINES > table.size() - 1) {
         y = LAST_Y; m_TableYFirstLine = table.size() - TEXT_W_LINES;
     }
     else m_TableYFirstLine += TEXT_W_LINES;
