@@ -1,12 +1,9 @@
-#define _WIN32_WINNT 0x0500
+п»ї#define _WIN32_WINNT 0x0500
 #include <windows.h>
 #include "Header.h"
 
 ConsoleView::ConsoleView(AdapterPDCurses* Adapter)
 {
-    //m_myAdapter->A_initscr();
-   //m_myAdapter->A_resize_term(MAX_NLINES, MAX_NCOLS);
-
     m_myAdapter = Adapter;
     m_myAdapter->A_initscr();
     m_myAdapter->A_resize_term(MAX_NLINES, MAX_NCOLS);
@@ -20,7 +17,7 @@ ConsoleView::ConsoleView(AdapterPDCurses* Adapter)
     curr_win = text_win;
     help_win = m_create_text_win();
 
-    //панели без адаптера, но мб я их и нафиг уберу.
+    //РїР°РЅРµР»Рё Р±РµР· Р°РґР°РїС‚РµСЂР°, РЅРѕ СЏ РёС… Рё РЅРµ РёСЃРїРѕР»СЊР·СѓСЋ.
     help_pannel = new_panel(help_win);
     text_pannel = new_panel(text_win);
     set_panel_userptr(text_pannel, help_pannel);
@@ -89,7 +86,7 @@ void ConsoleView::PrintLineByLineXY(const STD::MyString& str, int y_start, int x
 {
     int curr_y = 0, curr_x = 0, temp_x = 0;
     getyx(text_win, curr_y, curr_x);
-    if (offset == 2) { //остаться на месте
+    if (offset == 2) { //РѕСЃС‚Р°С‚СЊСЃСЏ РЅР° РјРµСЃС‚Рµ
     }
     else if (curr_x == LAST_X || offset == 0) {
         ++curr_y; curr_x = 0;
@@ -315,7 +312,7 @@ void ConsoleView::m_ProcPressedKeyPGDN(const STD::MyString& str, size_t idx)
     new_idx = table[m_TableYFirstLine + y][FIRST_IDX_LINE] + x;
 }
 
-void ConsoleView::m_ProcPressedKeyLeft(size_t idx) //гуляем только по линии консоли, не по строке. скролл не нужен.
+void ConsoleView::m_ProcPressedKeyLeft(size_t idx) //РіСѓР»СЏРµРј С‚РѕР»СЊРєРѕ РїРѕ Р»РёРЅРёРё РєРѕРЅСЃРѕР»Рё, РЅРµ РїРѕ СЃС‚СЂРѕРєРµ. СЃРєСЂРѕР»Р» РЅРµ РЅСѓР¶РµРЅ.
 {
     getyx(text_win, y, x);
     if (x == 0) return;
@@ -354,7 +351,7 @@ void ConsoleView::m_ProcPressedZero()
 
 void ConsoleView::m_ProcPressedKeyDown(const STD::MyString& str, size_t idx)
 {
-    if (y + m_TableYFirstLine + 1 == table.size()) return; //это последняя строка
+    if (y + m_TableYFirstLine + 1 == table.size()) return; //СЌС‚Рѕ РїРѕСЃР»РµРґРЅСЏСЏ СЃС‚СЂРѕРєР°
     getyx(text_win, y, x);
     if (y + 1 > LAST_Y) {
         ++m_TableYFirstLine;
@@ -377,7 +374,7 @@ void ConsoleView::m_ProcPressedKeyDown(const STD::MyString& str, size_t idx)
 
 void ConsoleView::m_ProcPressedKeyUp(const STD::MyString& str, size_t idx)
 {
-    if (y + m_TableYFirstLine - 1 < 0) return; //это первая строка
+    if (y + m_TableYFirstLine - 1 < 0) return; //СЌС‚Рѕ РїРµСЂРІР°СЏ СЃС‚СЂРѕРєР°
     getyx(text_win, y, x);
     if (y - 1 < 0) {
         --m_TableYFirstLine;
@@ -414,14 +411,14 @@ void ConsoleView::m_ProcPressedG(const STD::MyString& str, size_t idx)
 {
     getyx(text_win, y, x);
     int new_y_table = (table.size() - 1);
-    if (new_y_table <= m_TableYFirstLine + LAST_Y) { //помещается в текущий экран
+    if (new_y_table <= m_TableYFirstLine + LAST_Y) { //РїРѕРјРµС‰Р°РµС‚СЃСЏ РІ С‚РµРєСѓС‰РёР№ СЌРєСЂР°РЅ
         int n_y = new_y_table - (m_TableYFirstLine + y);
         y += n_y;
     }
     else {
-        //while (new_y_table > m_TableYFirstLine + LAST_Y) { //тут определенно можо без цикла, но время позднее и я не соображаю уже
+        //while (new_y_table > m_TableYFirstLine + LAST_Y) { //С‚СѓС‚ РѕРїСЂРµРґРµР»РµРЅРЅРѕ РјРѕР¶Рѕ Р±РµР· С†РёРєР»Р°, РЅРѕ РІСЂРµРјСЏ РїРѕР·РґРЅРµРµ Рё СЏ РЅРµ СЃРѕРѕР±СЂР°Р¶Р°СЋ СѓР¶Рµ
         //    ++m_TableYFirstLine;
-        //} //без цикла: см. MOveCursorToidx
+        //} //Р±РµР· С†РёРєР»Р°: СЃРј. MOveCursorToidx
         m_TableYFirstLine = new_y_table - LAST_Y;
         y = LAST_Y;
         PrintLineByLine(str, 0, 0);
@@ -439,13 +436,13 @@ void ConsoleView::m_ProcPressedG(const STD::MyString& str, size_t idx)
 
 void ConsoleView::m_ScrollForNewLine(const STD::MyString& str, size_t idx, size_t line)
 {
-    if (line > m_TableYFirstLine + LAST_Y) { //если новый индекс ниже экрана, скроллим вниз
+    if (line > m_TableYFirstLine + LAST_Y) { //РµСЃР»Рё РЅРѕРІС‹Р№ РёРЅРґРµРєСЃ РЅРёР¶Рµ СЌРєСЂР°РЅР°, СЃРєСЂРѕР»Р»РёРј РІРЅРёР·
         m_TableYFirstLine = line - LAST_Y;
         y = LAST_Y;
         PrintLineByLine(str, 0, 0);
         m_myAdapter->A_wrefresh(text_win);
     }
-    else if (line < m_TableYFirstLine) {//новый индекс выше, скролл вверх
+    else if (line < m_TableYFirstLine) {//РЅРѕРІС‹Р№ РёРЅРґРµРєСЃ РІС‹С€Рµ, СЃРєСЂРѕР»Р» РІРІРµСЂС…
         m_TableYFirstLine = line;
         y = 0;
         PrintLineByLine(str, 0, 0);
@@ -530,10 +527,10 @@ void ConsoleView::PrintMessage(const STD::MyString& str)
     m_myAdapter->A_wrefresh(text_win);
 }
 
-//возможно, удалить
+//РІРѕР·РјРѕР¶РЅРѕ, СѓРґР°Р»РёС‚СЊ
 void ConsoleView::mvPrintMessage(const char* str, int y, int x)
 {
-    mvwprintw(text_win, y, x, str); //работает совсем не как нужно! //а мб и работает
+    mvwprintw(text_win, y, x, str); //СЂР°Р±РѕС‚Р°РµС‚ СЃРѕРІСЃРµРј РЅРµ РєР°Рє РЅСѓР¶РЅРѕ! //Р° РјР± Рё СЂР°Р±РѕС‚Р°РµС‚
     wrefresh(text_win);
 }
 
