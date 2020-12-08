@@ -1,5 +1,6 @@
 # SimpleTextEditor
 A simple console text editor.
+
 **new_idea2** - branch with latest updates.
 
 1. To get started, open an existing document with **:o filename** command.
