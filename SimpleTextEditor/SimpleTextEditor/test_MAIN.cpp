@@ -1,77 +1,133 @@
 #include "Header.h"
 
-/*
-WINDOW* create_newwin(int height, int width, int starty, int startx)
-{
-	WINDOW* local_win;
+//#include "panel.h"
+//
+//#define NLINES 10
+//#define NCOLS 40
+//
+//void init_wins(WINDOW** wins, int n);
+//void win_show(WINDOW* win, char* label, int label_color);
+//void print_in_middle(WINDOW* win, int starty, int startx, int width, char* string, chtype color);
+//
+//int main()
+//{
+//	WINDOW* my_wins[3];
+//	PANEL* my_panels[3];
+//	PANEL* top;
+//	int ch;
+//
+//	/* Initialize curses */
+//	initscr();
+//	start_color();
+//	cbreak();
+//	noecho();
+//	keypad(stdscr, TRUE);
+//
+//	/* Initialize all the colors */
+//	init_pair(1, COLOR_RED, COLOR_BLACK);
+//	init_pair(2, COLOR_GREEN, COLOR_BLACK);
+//	init_pair(3, COLOR_BLUE, COLOR_BLACK);
+//	init_pair(4, COLOR_CYAN, COLOR_BLACK);
+//
+//	init_wins(my_wins, 3);
+//
+//	/* Attach a panel to each window */ 	/* Order is bottom up */
+//	my_panels[0] = new_panel(my_wins[0]); 	/* Push 0, order: stdscr-0 */
+//	my_panels[1] = new_panel(my_wins[1]); 	/* Push 1, order: stdscr-0-1 */
+//	my_panels[2] = new_panel(my_wins[2]); 	/* Push 2, order: stdscr-0-1-2 */
+//
+//	/* Set up the user pointers to the next panel */
+//	set_panel_userptr(my_panels[0], my_panels[1]);
+//	set_panel_userptr(my_panels[1], my_panels[2]);
+//	set_panel_userptr(my_panels[2], my_panels[0]);
+//
+//	/* Update the stacking order. 2nd panel will be on top */
+//	update_panels();
+//
+//	/* Show it on the screen */
+//	attron(COLOR_PAIR(4));
+//	mvprintw(LINES - 2, 0, "Use tab to browse through the windows (F1 to Exit)");
+//	attroff(COLOR_PAIR(4));
+//	doupdate();
+//
+//	top = my_panels[2];
+//	while ((ch = getch()) != KEY_F(1))
+//	{
+//		switch (ch)
+//		{
+//		case 9:
+//			top = (PANEL*)panel_userptr(top);
+//			top_panel(top);
+//			break;
+//		}
+//		update_panels();
+//		doupdate();
+//	}
+//	endwin();
+//	return 0;
+//}
+//
+///* Put all the windows */
+//void init_wins(WINDOW** wins, int n)
+//{
+//	int x, y, i;
+//	char label[80];
+//
+//	y = 2;
+//	x = 10;
+//	for (i = 0; i < n; ++i)
+//	{
+//		wins[i] = newwin(NLINES, NCOLS, y, x);
+//		sprintf_s(label, "Window Number %d", i + 1);
+//		win_show(wins[i], label, i + 1);
+//		wprintw(wins[i], "%d", i);
+//
+//	}
+//}
+//
+///* Show the window with a border and a label */
+//void win_show(WINDOW* win, char* label, int label_color)
+//{
+//	int startx, starty, height, width;
+//
+//	getbegyx(win, starty, startx);
+//	getmaxyx(win, height, width);
+//
+//	box(win, 0, 0);
+//	mvwaddch(win, 2, 0, ACS_LTEE);
+//	mvwhline(win, 2, 1, ACS_HLINE, width - 2);
+//	mvwaddch(win, 2, width - 1, ACS_RTEE);
+//
+//	print_in_middle(win, 1, 0, width, label, COLOR_PAIR(label_color));
+//}
+//
+//void print_in_middle(WINDOW* win, int starty, int startx, int width, char* string, chtype color)
+//{
+//	int length, x, y;
+//	float temp;
+//
+//	if (win == NULL)
+//		win = stdscr;
+//	getyx(win, y, x);
+//	if (startx != 0)
+//		x = startx;
+//	if (starty != 0)
+//		y = starty;
+//	if (width == 0)
+//		width = 80;
+//
+//	length = strlen(string);
+//	temp = (width - length) / 2;
+//	x = startx + (int)temp;
+//	wattron(win, color);
+//	mvwprintw(win, y, x, "%s", string);
+//	wattroff(win, color);
+//	refresh();
+//}
 
-	local_win = newwin(height, width, starty, startx);
-	wborder(local_win, '|', '|', '-', '-', '+', '+', '+', '+');
-	wrefresh(local_win);
-	return local_win;
-}
-
-void destroy_win(WINDOW* local_win)
-{
-	wborder(local_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-	wrefresh(local_win);
-	delwin(local_win);
-}
-*/
 int main()
 {
-    /*initscr();
-    noecho();
-    curs_set(FALSE);
-    cbreak();
 
-    if (has_colors() == FALSE)
-    {
-        endwin();
-        printf("Your terminal does not support color\n");
-        exit(1);
-    }
-    start_color();
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(3, COLOR_BLUE, COLOR_BLACK);
-    init_pair(4, COLOR_YELLOW, COLOR_BLACK);
-
-    attron(COLOR_PAIR(1));
-    mvprintw(1, 1, "1. Start");
-    attroff(COLOR_PAIR(1));
-
-    attron(COLOR_PAIR(2));
-    mvprintw(2, 1, "2. Options");
-    attroff(COLOR_PAIR(2));
-
-    attron(COLOR_PAIR(3));
-    mvprintw(3, 1, "3. Options");
-    attroff(COLOR_PAIR(3));
-
-    attron(COLOR_PAIR(4));
-    mvprintw(4, 1, "4. Exit");
-    attroff(COLOR_PAIR(4));
-
-    char ch = NULL;
-    while (1) {
-        ch = getch();
-        if (ch == '1') {
-            clear();
-            mvprintw(0, 0, "Press any key ...");
-            break;
-        }
-        else if (ch == '4') {
-            endwin();
-            exit(1);
-        }
-    }
-
-    refresh();
-    getch();
-    endwin();
-    return 0;
-    */
 
 	/*WINDOW* local_win;
 	initscr();
@@ -87,11 +143,24 @@ int main()
 	destroy_win(local_win);
 	getch();
 	endwin();*/
-	
-    WindowModel Model;
-    ConsoleView view(&Model);
-    Controller Controller(&Model);
-    Controller.start();
-    return 0;
-}
 
+   /* std::ifstream fout; 
+    fout.open("test file2.txt", std::ios_base::out);
+    STD::MyString s = "4545\n   7878 \n  \n 1212";
+    fout >> s;
+    fout.close();*/
+
+    WindowModel Model;
+	AdapterPDCurses Adapter;
+
+	//раньше View ничего не принимал
+	//подождите минутку. я нигде не присваиваю View указатель Adapter, так почему это вообще работает??
+
+    ConsoleView View(&Adapter);
+	Model.AddObserver(&View); 
+    Controller Controller(&Model);
+	View.AddController(&Controller);
+	View.START();
+    return 0;
+	
+}

@@ -92,7 +92,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>pdcurses.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pdcurses.lib;StaticLibMyStr.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,12 +144,15 @@
   <ItemGroup>
     <ClCompile Include="ConsoleView.cpp" />
     <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="Observable.cpp" />
     <ClCompile Include="test_MAIN.cpp" />
     <ClCompile Include="WindowModel.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AdapterLib.h" />
     <ClInclude Include="curses.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="MyString.h" />
     <ClInclude Include="panel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
